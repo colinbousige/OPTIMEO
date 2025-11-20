@@ -26,10 +26,10 @@ We present `OPTIMEO`, a Bayesian optimization web app for process tuning, modeli
 The web application is designed to be user-friendly and accessible to researchers and students alike, providing a powerful tool for optimizing experimental processes in various research fields.
 The Bayesian optimization part is based on the `ax-platform` package [@bakshy_ae_2018;@olson_ax_platform_2025], which in turn is based on `BoTorch` [@balandat_botorch_2020].
 It therefore allows for numerical and categorical variables, as well as multi-objective optimization.
-To use the web application, no knowledge of python is required: the user can run it on the streamlit.io web page, [https://optimeo.streamlit.app/](https://optimeo.streamlit.app/), or run it locally on their machine for better performance.
+To use the web application, no knowledge of Python is required: The user can run it on the streamlit.io web page, [https://optimeo.streamlit.app/](https://optimeo.streamlit.app/), or run it locally on their machine for better performance.
 The user can simply (1) select the desired options to generate a DoE; or (2) upload their data and perform Bayesian optimization to look for optimal parameters to minimize/maximize their experimental response; or (3) upload their data and plot it, assess possible correlations between variables, as well as run various regression models using `scikit-learn` [@pedregosa_scikitlearn_2011] to make predictions and analyze the importance of each feature on their experimental process.
 Extensive yet accessible descriptions of the different options are provided in the web application to help the user understand what they are doing.
-Using the package in python is also possible and it offers more versatility, like the possibility to make an optimization loop (in case experiments and their characterizations are done by a robot, for example) or to provide more parameters to the ML models -- the heavy lifting is done under the hood by the package (e.g. categorical variables encoding and decoding, data formatting, normalizations, workflows, etc.).
+Using the package in Python is also possible and it offers more versatility, like the possibility to make an optimization loop (in case experiments and their characterizations are done by a robot, for example) or to provide more parameters to the ML models -- the heavy lifting is done under the hood by the package (e.g. categorical variables encoding and decoding, data formatting, normalizations, workflows, etc.).
 
 # Statement of need
 
@@ -49,7 +49,7 @@ However, it can become computationally expensive as the number of features and e
 Genetic algorithms, on the other hand, are generally faster in terms of computation time per evaluation but may require more evaluations to converge to an optimal solution [@lan_time_2022].
 
 However, the trade-off between data efficiency, computation time, and experimentation time is a key consideration when choosing between these two optimization methods.
-The `OPTIMEO` package is aimed at helping scientists of any field to reach the optimum parameters of their process using the minimum amount of ressources and effort.
+The `OPTIMEO` package is aimed at helping scientists of any field to reach the optimum parameters of their process using the minimum amount of resources and effort.
 As a result, `OPTIMEO` relies on Bayesian optimization for its superior data efficiency.
 When each experiment can take a day or more to complete and analyze (or costs a lot of money), minimizing the total number of experiments is crucial.
 Bayesian optimization is preferred over genetic algorithms in this context, as it typically requires fewer experiments to reach optimal parameters -- even if the algorithm itself takes a few extra minutes to suggest the next experiments.

@@ -1,5 +1,5 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15308437.svg)](https://doi.org/10.5281/zenodo.15308437)
-[![status](https://joss.theoj.org/papers/5df5fbe4e131d230b13fb3c98db545d8/status.svg)](https://joss.theoj.org/papers/5df5fbe4e131d230b13fb3c98db545d8)
+[![paper](https://joss.theoj.org/papers/5df5fbe4e131d230b13fb3c98db545d8/status.svg)](https://joss.theoj.org/papers/5df5fbe4e131d230b13fb3c98db545d8)
 [![Tests](https://github.com/colinbousige/OPTIMEO/actions/workflows/python-app.yml/badge.svg)](https://github.com/colinbousige/OPTIMEO/actions/workflows/python-app.yml)
 [![Documentation](https://github.com/colinbousige/OPTIMEO/actions/workflows/build-docs.yml/badge.svg)](https://colinbousige.github.io/OPTIMEO/optimeo.html)
 
@@ -168,28 +168,18 @@ This app was made by [Colin Bousige](mailto:colin.bousige@cnrs.fr). Contact me f
 
 ## How to cite
 
-<!-- This work is related to the article "xxxx". Please cite this work if you publish using this code:
+This work has been published in the article "OPTIMEO: Bayesian Optimization Web App for Process Tuning, Modeling, and Orchestration", C. Bousige, [J. Open Source Softw. **10**, 115 (2025), 8510](https://joss.theoj.org/papers/10.21105/joss.08510). Please cite this paper if you publish using this code:
 
 ```bibtex
-@article{xxx,
-    title = {xxx},
-    author = {xxx},
-    journal = {xxx},
-    volume = {xxx},
-    year = {xxx},
-    pages = {xxx},
-    doi = {xxx}
-}
-``` -->
-
-The source can be found [on Github](https://github.com/colinbousige/optimeo), please consider citing it as:
-
-```bibtex
-@software{Bousige_optimeo,
-    author = {Bousige, Colin},
-    title = {{OPTIMEO}},
-    url = {https://github.com/colinbousige/optimeo},
-    doi={10.5281/zenodo.15308437}
+@article{bousige_optimeo_2025,
+  title = {{{OPTIMEO}}: {{Bayesian Optimization Web App}} for {{Process Tuning}}, {{Modeling}}, and {{Orchestration}}},
+  author = {Bousige, Colin},
+  year = 2025,
+  journal = {J. Open Source Softw.},
+  volume = {10},
+  number = {115},
+  pages = {8510},
+  doi = {10.21105/joss.08510}
 }
 ```
 

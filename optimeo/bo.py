@@ -928,12 +928,14 @@ Input data:
                 trace.colorscale = "viridis"
             if 'marker' in trace and trace.legendgroup != cand_name:
                 arm_names = []
-                for text in trace['text']:
-                    match = re.search(r'Arm (\d+_\d+)', text)
-                    if match:
-                        arm_names.append(match.group(1))
-                arm_to_color = dict(zip(completed_trials['arm_name'], completed_trials['colors']))
-                trace.marker.color = [arm_to_color[arm] for arm in arm_names]
+                if trace['text']:
+                    for text in trace['text']:
+                        print(text)
+                        match = re.search(r'Arm (\d+_\d+)', text)
+                        if match:
+                            arm_names.append(match.group(1))
+                    arm_to_color = dict(zip(completed_trials['arm_name'], completed_trials['colors']))
+                    trace.marker.color = [arm_to_color[arm] for arm in arm_names]
                 trace.marker.symbol = "circle"
                 trace.marker.size = 10
                 trace.marker.line.width = 2

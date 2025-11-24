@@ -30,7 +30,7 @@ def test_initialization():
     assert fig is not None
     fig = experiment.plot_model(metricname='Price', linear=True)
     assert fig is not None
-    fig = experiment.plot_model(metricname='Yield', slice_values={'Temperature': 0})
+    fig = experiment.plot_model(metricname='Yield', slice_values={'Temperature': 50})
     assert fig is not None
     experiment.compute_pareto_frontier()
     fig = experiment.plot_pareto_frontier()

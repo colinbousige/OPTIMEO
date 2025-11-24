@@ -24,7 +24,7 @@ import numpy as np
 import pandas as pd
 import random
 from janitor import clean_names
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, Tuple
 
 from ax.core.observation import ObservationFeatures, TrialStatus
 from ax.modelbridge.generation_strategy import GenerationStep, GenerationStrategy
@@ -1199,7 +1199,7 @@ def ordered_dict_to_dataframe(data):
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
-def read_experimental_data(file_path: str, out_pos=[-1]) -> (Dict[str, Dict[str, Any]], Dict[str, Dict[str, Any]]):
+def read_experimental_data(file_path: str, out_pos=[-1]) -> Tuple[Dict[str, Dict[str, Any]], Dict[str, Dict[str, Any]]]:
     """
     Read experimental data from a CSV file and format it into features and outcomes dictionaries.
 

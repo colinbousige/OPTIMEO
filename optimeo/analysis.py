@@ -1011,7 +1011,7 @@ class DataAnalysis:
         y = self._data[self._response]
         if self._split_size > 0:
             X_train, X_test, y_train, y_test = train_test_split(
-                X, y, test_size=self._split_size)
+                X, y, test_size=self._split_size, random_state=42)
         else:
             X_train, X_test, y_train, y_test = X, X, y, y
         

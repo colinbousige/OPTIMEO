@@ -269,9 +269,21 @@ To remove the intercept, add `-1` at the end of the equation.""")
                 if dtypes[factor] == 'object':
                     toencode = Xnew[factor]
                     Xnew[factor] = encoders[factor].transform([toencode])[0]
-            # st.write(Xnew)
-            right.container(border=True).write(f"<p style='text-align:center;font-size:1.5em'>Predicted {response}:<br><br><b>{st.session_state.modlin.predict(exog=Xnew)[0]:.4g}</b></p>",
-                        unsafe_allow_html=True)
+            # Get prediction and standard error
+            # Convert Xnew to a DataFrame for prediction
+            Xnew_df = pd.DataFrame([Xnew])
+            prediction = st.session_state.modlin.get_prediction(Xnew_df)
+            predicted_value = prediction.predicted_mean[0]
+            stderr = prediction.se_mean[0]  # Standard error of the prediction
+
+            # Display the predicted value and standard error
+            right.container(border=True).write(
+                f"<p style='text-align:center;font-size:1.5em'>"
+                f"Predicted {response}:<br><br>"
+                f"{predicted_value:.4g} ± {stderr:.4g}"
+                "</p>",
+                unsafe_allow_html=True
+            )
         st.write("")
         st.write("")
         st.write("")
@@ -364,14 +376,16 @@ Default parameters will be used if you do not specify them, they are:
             st.session_state.figml = st.session_state.analysis.plot_ML_model(features_in_log)
         
         if st.session_state.figml is not None:
-            # make plot of predicted versus actual
+            # Make plot of predicted vs actual
             cols = st.columns([1, 1])
             cols[0].plotly_chart(st.session_state.figml[0])
             if st.session_state.figml[1] is not None:
                 cols[1].plotly_chart(st.session_state.figml[1])
             else:
                 cols[1].warning(f"The {model_sel} model does not support feature importance.")
+
             st.write(f"##### Predict the response for a set of factors with this {model_sel} model:")
+
             Xnew = []
             left, right = st.columns(2)
             for i, factor in enumerate(factors):
@@ -397,8 +411,87 @@ Default parameters will be used if you do not specify them, they are:
             # Make prediction
             prediction = st.session_state.modml.predict(Xnew)[0]
 
-            right.container(border=True).write(f"<p style='text-align:center;font-size:1.5em'>Predicted {response}:<br><br><b>{prediction:.4g}</b></p>",
-                        unsafe_allow_html=True)
+            # Calculate standard error
+            stderr = None
+            if model_sel in ["ElasticNetCV", "RidgeCV", "LinearRegression"]:
+                # For linear models, use the covariance matrix
+                X_train = st.session_state.analysis.data[st.session_state.analysis.factors]
+                y_train = st.session_state.analysis.data[st.session_state.analysis.response]
+
+                # Add intercept if needed
+                if hasattr(st.session_state.modml, 'fit_intercept') and st.session_state.modml.fit_intercept:
+                    X_train_with_intercept = np.hstack([np.ones((X_train.shape[0], 1)), X_train])
+                else:
+                    X_train_with_intercept = X_train
+
+                # Get the covariance matrix of the coefficients
+                if hasattr(st.session_state.modml, 'cov_params'):
+                    cov_matrix = st.session_state.modml.cov_params()
+                else:
+                    # For RidgeCV and ElasticNetCV, we need to estimate the covariance matrix
+                    # This is a simplified approach; for a more accurate estimate, consider using the MSE and the regularization
+                    residuals = y_train - st.session_state.modml.predict(X_train)
+                    mse = np.mean(residuals**2)
+                    cov_matrix = mse * np.linalg.inv(X_train_with_intercept.T @ X_train_with_intercept)
+
+                # Add intercept to Xnew if needed
+                if hasattr(st.session_state.modml, 'fit_intercept') and st.session_state.modml.fit_intercept:
+                    Xnew_with_intercept = np.hstack([np.ones((Xnew.shape[0], 1)), Xnew])
+                else:
+                    Xnew_with_intercept = Xnew
+
+                # Calculate the variance of the prediction
+                var_pred = Xnew_with_intercept @ cov_matrix @ Xnew_with_intercept.T
+                stderr = np.sqrt(var_pred)[0, 0]
+
+            elif model_sel == "GaussianProcess":
+                _, stderr = st.session_state.modml.predict(Xnew, return_std=True)
+
+            else:
+                # For non-linear models, use bootstrapping
+                n_bootstraps = 100
+                bootstrap_predictions = []
+                X = st.session_state.analysis.data[st.session_state.analysis.factors]
+                y = st.session_state.analysis.data[st.session_state.analysis.response]
+                if split_size > 0:
+                    X_train, X_test, y_train, y_test = train_test_split(
+                        X, y, test_size=split_size, random_state=42)
+                else:
+                    X_train, X_test, y_train, y_test = X, X, y, y
+
+                for _ in range(n_bootstraps):
+                    indices = np.random.choice(len(X_train), size=len(X_train), replace=True)
+                    # Use .iloc for integer-location based indexing
+                    X_resampled = X_train.iloc[indices]
+                    y_resampled = y_train.iloc[indices]
+                    
+                    if model_sel == "RandomForest":
+                        model = RandomForestRegressor(**kwargs)
+                    elif model_sel == "GradientBoosting":
+                        model = GradientBoostingRegressor(**kwargs)
+                    
+                    model.fit(X_resampled, y_resampled)
+                    bootstrap_predictions.append(model.predict(Xnew)[0])
+
+                stderr = np.std(bootstrap_predictions, ddof=1)
+
+            # Display prediction and standard error
+            if stderr is not None:
+                right.container(border=True).write(
+                    f"<p style='text-align:center;font-size:1.5em'>"
+                    f"Predicted {response}:<br><br>"
+                    f"<b>{prediction:.4g} ± {stderr:.4g}</b>"
+                    "</p>",
+                    unsafe_allow_html=True
+                )
+            else:
+                right.container(border=True).write(
+                    f"<p style='text-align:center;font-size:1.5em'>"
+                    f"Predicted {response}:<br><br>"
+                    f"<b>{prediction:.4g}</b>"
+                    "</p>",
+                    unsafe_allow_html=True
+                )
         st.write("")
         st.write("")
         st.write("")

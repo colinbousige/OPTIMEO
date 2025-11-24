@@ -414,11 +414,29 @@ The results may vary slightly each time you run it."""):
         # add a button to launch pareto frontiers plotting
         containerplot.write("#### Plot options")
         # add help about slicing parameters in a tooltip
-        containerplot.info(icon=":material/info:", body="""For example, if your search space has more than 2 dimensions (i.e. you have more than 2 parameters), and you want to plot a 2D contour of your model's predictions comparing just two parameters, you'll need to fix the other ones to a constant value to get a 2D "slice" through the high-dimensional space. 
+        with containerplot.expander("**Information about slicing parameters**", icon=":material/info:"):
+            st.write("""When your search space has more than two parameters, you can still visualize a 2D contour plot by fixing the extra parameters to constant values. This creates a 2D "slice" through your high-dimensional space, allowing you to focus on just two parameters at a time.
 
-Adding a value in the boxes below will fix the corresponding parameter to that value when plotting the model. If you leave a box empty, the parameter will be left free, and if there are more than 2 free parameters, the plot will allow you to choose which two parameters to plot, the other ones being marginalized (averaged) over.
+**How to Fix Parameters:**
 
-In the plots below, the points transparency indicates the distance from the slice values: the more transparent a point is, the further it is from the slice value for the fixed parameters.""")
+- Enter a value in the boxes below to fix a parameter to that value for the plot.
+- Leave a box empty if you want the parameter to remain free (not fixed).
+
+**What Happens If You Leave Parameters Free?**
+
+- If more than two parameters are free, the plot will let you choose which two parameters to visualize.
+- The other free parameters will be marginalized (averaged over) in the plot.
+
+**Understanding the Plot Colors:**
+
+The color of each point in the plot represents its distance from the slice values (the fixed parameters).
+The colors transition smoothly:
+
+- :blue[**Blue**]: Points are below the slice value.
+- **White**: Points are close to the slice value.
+- :red[**Red**]: Points are above the slice value.
+
+""")
         cols= containerplot.columns([3,3,1])
         parslice = {}
         for i,f in enumerate(factors):

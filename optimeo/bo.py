@@ -37,6 +37,9 @@ from ax.plot.slice import plot_slice
 from ax.service.ax_client import AxClient, ObjectiveProperties
 from botorch.acquisition.analytic import *
 import plotly.graph_objects as go
+import plotly.express as px
+import re
+import matplotlib.cm as cm
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
@@ -828,123 +831,126 @@ Input data:
     def plot_model(self, metricname=None, slice_values={}, linear=False):
         """
         Plot the model's predictions for the experiment's parameters and outcomes.
-
         Parameters
         ----------
-
         metricname : Optional[str]
             The name of the metric to plot. If None, the first outcome metric is used.
-
         slice_values : Optional[Dict[str, Any]]
             Dictionary of slice values for plotting.
-
         linear : bool
             Whether to plot a linear slice plot. Default is False.
-
         Returns
         -------
-
         plotly.graph_objects.Figure: 
             Plotly figure of the model's predictions.
         """
         if self.ax_client is None:
             self.initialize_ax_client()
             self.suggest_next_trials()
-
         cand_name = 'Candidate' if self._N == 1 else 'Candidates'
         mname = self.ax_client.objective_names[0] if metricname is None else metricname
         param_name = [name for name in self.names if name not in slice_values.keys()]
         par_numeric = [name for name in param_name if self._features[name]['type'] in ['int', 'float']]
-        
-        if len(par_numeric)==1:
+
+        if len(par_numeric) == 1:
             fig = plot_slice(
-                    model=self.model,
-                    metric_name=mname,
-                    density=100,
-                    param_name=par_numeric[0],
-                    generator_runs_dict={cand_name: self.generator_run},
-                    slice_values=slice_values
-                    )
-        elif len(par_numeric)==2:
+                model=self.model,
+                metric_name=mname,
+                density=100,
+                param_name=par_numeric[0],
+                generator_runs_dict={cand_name: self.generator_run},
+                slice_values=slice_values
+            )
+        elif len(par_numeric) == 2:
             fig = plot_contour(
-                    model=self.model,
-                    metric_name=mname,
-                    param_x=par_numeric[0],
-                    param_y=par_numeric[1],
-                    generator_runs_dict={cand_name: self.generator_run},
-                    slice_values=slice_values
-                    )
+                model=self.model,
+                metric_name=mname,
+                param_x=par_numeric[0],
+                param_y=par_numeric[1],
+                generator_runs_dict={cand_name: self.generator_run},
+                slice_values=slice_values
+            )
         else:
+            # remove sliced parameters from par_numeric
+            pars = [p for p in par_numeric if p not in slice_values.keys()]
             fig = interact_contour(
-                    model=self.model,
-                    generator_runs_dict={cand_name: self.generator_run},
-                    metric_name=mname,
-                    slice_values=slice_values,
-                )
+                model=self.model,
+                generator_runs_dict={cand_name: self.generator_run},
+                metric_name=mname,
+                slice_values=slice_values,
+                parameters_to_use=pars
+            )
 
-        # Turn the figure into a plotly figure
         plotly_fig = go.Figure(fig.data)
-
-        # Get all completed trials for distance calculation
         all_trials = self.ax_client.get_trials_data_frame()
         completed_trials = all_trials[all_trials['trial_status'] != 'CANDIDATE']
-        
-        # Calculate distances from slice plane for completed trials
-        distances = []
-        if len(slice_values) > 0:
-            for idx, row in completed_trials.iterrows():
-                # Calculate Euclidean distance to slice plane
-                dist_squared = 0
-                for param, slice_val in slice_values.items():
-                    if param in row and param in self.names:
-                        # Normalize by parameter range for fair comparison
-                        param_range = self._features[param].get('bounds', [0, 1])
-                        normalized_dist = (row[param] - slice_val) / (param_range[1] - param_range[0])
-                        dist_squared += normalized_dist ** 2
-                distances.append(np.sqrt(dist_squared))
-            
-            # Normalize distances to [0, 1] for opacity mapping
-            if len(distances) > 0 and max(distances) > 0:
-                max_dist = max(distances)
-                # Map distance to opacity: closer = more opaque (1.0), farther = more transparent (0.2)
-                opacities = [1.0 - 0.8 * (d / max_dist) for d in distances]
-            else:
-                opacities = [1.0] * len(distances)
-        else:
-            # No slice specified, all points fully opaque
-            opacities = [1.0] * len(completed_trials)
+        # compute distance to slice
+        col_to_consider = completed_trials[[k for k in slice_values.keys()]]
+        completed_trials['signed_dist_to_slice'] = (
+            (col_to_consider - slice_values).sum(axis=1)  # Sum of signed differences
+        )
+        signed_dists = completed_trials['signed_dist_to_slice'].values
+        positive_dists = signed_dists[signed_dists >= 0]
+        negative_dists = signed_dists[signed_dists < 0]
 
-        # Modify only the "In-sample" markers
+        # Normalize positive distances to [0, 1]
+        if len(positive_dists) > 0 and np.max(positive_dists) > 0:
+            normalized_positive = positive_dists / np.max(positive_dists)
+        else:
+            normalized_positive = np.zeros_like(positive_dists)
+
+        # Normalize negative distances to [-1, 0]
+        if len(negative_dists) > 0 and np.min(negative_dists) < 0:
+            normalized_negative = negative_dists / np.abs(np.min(negative_dists))
+        else:
+            normalized_negative = np.zeros_like(negative_dists)
+
+        # Combine the normalized distances
+        normalized_signed_dists = np.zeros_like(signed_dists)
+        normalized_signed_dists[signed_dists >= 0] = normalized_positive
+        normalized_signed_dists[signed_dists < 0] = normalized_negative
+
+        completed_trials['normalized_signed_dist'] = normalized_signed_dists
+        coolwarm = cm.get_cmap('bwr')
+        normalized_values = (completed_trials['normalized_signed_dist'] + 1) / 2  # Map from [-1,1] to [0,1]
+        colors = [
+            f"rgb({int(r*255)}, {int(g*255)}, {int(b*255)})"
+            for r, g, b, _ in coolwarm(normalized_values)
+        ]
+        completed_trials['colors'] = colors
         trials = self.ax_client.get_trials_data_frame()
         trials = trials[trials['trial_status'] == 'CANDIDATE']
         trials = trials[[name for name in self.names]]
-        
+
         in_sample_trace_idx = 0
         for trace in plotly_fig.data:
-            if trace.type == "contour":  # Check if it's a contour plot
-                trace.colorscale = "viridis"  # Apply Viridis colormap
-            if 'marker' in trace and trace.legendgroup != cand_name:  # Modify only the "In-sample" markers
-                trace.marker.color = "white"  # Change marker color
-                trace.marker.symbol = "circle"  # Change marker style
+            if trace.type == "contour":
+                trace.colorscale = "viridis"
+            if 'marker' in trace and trace.legendgroup != cand_name:
+                arm_names = []
+                for text in trace['text']:
+                    match = re.search(r'Arm (\d+_\d+)', text)
+                    if match:
+                        arm_names.append(match.group(1))
+                arm_to_color = dict(zip(completed_trials['arm_name'], completed_trials['colors']))
+                trace.marker.color = [arm_to_color[arm] for arm in arm_names]
+                trace.marker.symbol = "circle"
                 trace.marker.size = 10
                 trace.marker.line.width = 2
                 trace.marker.line.color = 'black'
-                
-                # Apply opacity based on distance from slice
-                if len(opacities) > 0:
-                    trace.marker.opacity = opacities
-                
+                # if len(opacities) > 0:
+                    # trace.marker.opacity = opacities
                 if trace.text is not None:
                     trace.text = [t.replace('Arm', '<b>Sample').replace("_0","</b>") for t in trace.text]
-            if trace.legendgroup == cand_name:  # Modify only the "Candidate" markers
-                trace.marker.color = "red"  # Change marker color
+            if trace.legendgroup == cand_name:
+                trace.marker.line.color = 'red'
+                trace.marker.color = "orange"
                 trace.name = cand_name
                 trace.marker.symbol = "x"
                 trace.marker.size = 12
                 trace.marker.opacity = 1
-                # Add hover info
-                trace.hoverinfo = "text"  # Enable custom text for hover
-                trace.hoverlabel = dict(bgcolor="#f8d5cd", font_color='black')
+                trace.hoverinfo = "text"
+                trace.hoverlabel = dict(bgcolor="#f8e3cd", font_color='black')
                 if trace.text is not None:
                     trace.text = [t.replace("<i>","").replace("</i>","") for t in trace.text]
                 trace.text = [
@@ -952,53 +958,54 @@ Input data:
                     for t in trace.text
                     for i in range(len(trials))
                 ]
-        
+
         plotly_fig.update_layout(
-            plot_bgcolor="white",  # White background
+            plot_bgcolor="white",
             legend=dict(bgcolor='rgba(0,0,0,0)'),
             margin=dict(l=10, r=10, t=50, b=50),
             xaxis=dict(
-                showgrid=True,  # Enable grid
-                gridcolor="lightgray",  # Light gray grid lines
+                showgrid=True,
+                gridcolor="lightgray",
                 zeroline=False,
-                zerolinecolor="black",  # Black zero line
+                zerolinecolor="black",
                 showline=True,
                 linewidth=1,
-                linecolor="black",  # Black border
+                linecolor="black",
                 mirror=True
             ),
             yaxis=dict(
-                showgrid=True,  # Enable grid
-                gridcolor="lightgray",  # Light gray grid lines
+                showgrid=True,
+                gridcolor="lightgray",
                 zeroline=False,
-                zerolinecolor="black",  # Black zero line
+                zerolinecolor="black",
                 showline=True,
                 linewidth=1,
-                linecolor="black",  # Black border
+                linecolor="black",
                 mirror=True
             ),
             xaxis2=dict(
-                showgrid=True,  # Enable grid
-                gridcolor="lightgray",  # Light gray grid lines
+                showgrid=True,
+                gridcolor="lightgray",
                 zeroline=False,
-                zerolinecolor="black",  # Black zero line
+                zerolinecolor="black",
                 showline=True,
                 linewidth=1,
-                linecolor="black",  # Black border
+                linecolor="black",
                 mirror=True
             ),
             yaxis2=dict(
-                showgrid=True,  # Enable grid
-                gridcolor="lightgray",  # Light gray grid lines
+                showgrid=True,
+                gridcolor="lightgray",
                 zeroline=False,
-                zerolinecolor="black",  # Black zero line
+                zerolinecolor="black",
                 showline=True,
                 linewidth=1,
-                linecolor="black",  # Black border
+                linecolor="black",
                 mirror=True
             ),
         )
         return plotly_fig
+
 
     def plot_optimization_trace(self, optimum=None):
         """

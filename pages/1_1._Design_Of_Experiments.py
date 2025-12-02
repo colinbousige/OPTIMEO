@@ -29,7 +29,7 @@ defaultParNames = ["Temperature", "ConcentrationA", "ConcentrationB", "Reaction_
                    "Parameter_14", "Parameter_15", "Parameter_16", "Parameter_17", 
                    "Parameter_18", "Parameter_19", "Parameter_20"]
 
-
+rseed = 42
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # Definition of User Interface
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 

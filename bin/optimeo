@@ -2,7 +2,9 @@
 
 # change this to your own path to where the Home.py file is located
 cd /Users/colin/Travail/Scripts/Optimization/OPTIMEO/
-# source the virtual environment if you made one
+# activate the conda/mamba environment if any
+eval "$(mamba shell hook --shell bash)"
+mamba activate optimeo
 # 
 # don't change this:
 streamlit run Home.py

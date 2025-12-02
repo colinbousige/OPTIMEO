@@ -35,6 +35,7 @@ dependencies = [
     "statsmodels==0.14.2",
     "streamlit==1.44.1",
     "xlrd==2.0.1",
+    "xlsxwriter==3.2.9"
 ]
 
 [project.urls]

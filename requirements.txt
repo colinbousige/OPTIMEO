@@ -15,6 +15,6 @@ seaborn==0.13.2
 statsmodels==0.14.2
 streamlit==1.44.1
 xlrd==2.0.1
-xlsxwriter
+xlsxwriter==3.2.9
 
 

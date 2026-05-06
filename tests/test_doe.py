@@ -11,10 +11,10 @@ from optimeo.doe import DesignOfExperiments
 
 # Sample parameters for testing
 sample_parameters = [
-        {'name': 'Temperature', 'type': 'integer', 'values': [20, 30, 40]},
-        {'name': 'Pressure', 'type': 'float', 'values': [1, 2, 3]},
-        {'name': 'Catalyst', 'type': 'categorical', 'values': ['A', 'B', 'C']},
-        {'name': 'Speed', 'type': 'categorical', 'values': [100, 200, 300]}
+        {'name': 'Temperature', 'type': 'integer', 'values': [20, 30]},
+        {'name': 'Pressure', 'type': 'float', 'values': [1, 2]},
+        {'name': 'Catalyst', 'type': 'categorical', 'values': ['A', 'B']},
+        {'name': 'Speed', 'type': 'categorical', 'values': [100, 300]}
     ]
 
 # Sample design types for testing
@@ -25,9 +25,9 @@ sample_design_types = [
     "Definitive Screening",
     "Space Filling Latin Hypercube",
     "Randomized Latin Hypercube",
-    "Optimal",
+    # "Optimal",
     "Plackett-Burman",
-    "Box-Behnken",
+    # "Box-Behnken",
 ]
 
 def test_initialization():

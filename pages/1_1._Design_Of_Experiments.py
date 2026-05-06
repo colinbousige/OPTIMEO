@@ -342,7 +342,8 @@ elif design_type=='Central Composite':
     #     alpha = 'r'
     # change parameter values to list
     for par in range(Npars):
-        parameters[par]['values'] = parameters[par]['values'].tolist()
+        if not isinstance(parameters[par]['values'], list):
+            parameters[par]['values'] = parameters[par]['values'].tolist()
 
 doe = DesignOfExperiments(
     type                = design_type,

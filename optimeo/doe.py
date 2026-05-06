@@ -472,7 +472,8 @@ class DesignOfExperiments:
             else:
                 self.design = build.box_behnken(d=pars)
         elif self.type == 'Central Composite':
-            self.design = build.central_composite(pars, 
+            pars_list = {k: v.tolist() if hasattr(v, 'tolist') else list(v) for k, v in pars.items()}
+            self.design = build.central_composite(pars_list,
                                                   center=self.center,
                                                   alpha=self.alpha,
                                                   face=self.face)
@@ -480,9 +481,11 @@ class DesignOfExperiments:
             raise ValueError("Unknown design type. Must be one of: 'Full Factorial', 'Sobol sequence', 'Fractional Factorial', 'Definitive Screening', 'Space Filling Latin Hypercube', 'Randomized Latin Hypercube', 'Optimal', 'Plackett-Burman', 'Box-Behnken' or 'Central Composite'.")
 
         for par in self.parameters:
-            if par['type'] == "Categorical" and self.type != 'Sobol sequence':
+            if par['type'].lower() == "categorical" and self.type != 'Sobol sequence':
                 vals = self._design[par['name']].to_numpy()
-                self.design[par['name']] = par['encoder'].inverse_transform([int(v) for v in vals])
+                n_classes = len(par['encoder'].classes_)
+                clipped = [int(np.clip(np.round(v), 0, n_classes - 1)) for v in vals]
+                self.design[par['name']] = par['encoder'].inverse_transform(clipped)
 
         # randomize the run order
         self.design['run_order'] = np.arange(len(self._design)) + 1

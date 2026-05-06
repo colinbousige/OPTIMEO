@@ -13,7 +13,8 @@ from optimeo.doe import DesignOfExperiments
 sample_parameters = [
         {'name': 'Temperature', 'type': 'integer', 'values': [20, 30, 40]},
         {'name': 'Pressure', 'type': 'float', 'values': [1, 2, 3]},
-        {'name': 'Catalyst', 'type': 'categorical', 'values': ['A', 'B', 'C']}
+        {'name': 'Catalyst', 'type': 'categorical', 'values': ['A', 'B', 'C']},
+        {'name': 'Speed', 'type': 'categorical', 'values': [100, 200, 300]}
     ]
 
 # Sample design types for testing
@@ -44,6 +45,23 @@ def test_initialization():
         assert isinstance(doe.design, pd.DataFrame)
         assert not doe.design.empty
         assert len(fig) > 0
+
+def test_central_composite_numeric():
+    """Test Central Composite with numeric parameters only."""
+    doe = DesignOfExperiments(type="Central Composite", parameters=sample_parameters)
+    assert isinstance(doe.design, pd.DataFrame)
+    assert not doe.design.empty
+
+def test_central_composite_with_categorical():
+    """Test Central Composite with a categorical parameter — axial star points must be clipped to valid labels."""
+    params = [
+        {'name': 'Temperature', 'type': 'float', 'values': [20, 40]},
+        {'name': 'Catalyst', 'type': 'categorical', 'values': ['A', 'B', 'C']},
+    ]
+    doe = DesignOfExperiments(type="Central Composite", parameters=params)
+    assert isinstance(doe.design, pd.DataFrame)
+    assert not doe.design.empty
+    assert set(doe.design['Catalyst']).issubset({'A', 'B', 'C'})
 
 def test_invalid_design_type():
     """Test if an invalid design type raises an error."""

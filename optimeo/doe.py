@@ -387,8 +387,9 @@ class DesignOfExperiments:
         if self.type == 'Full Factorial':
             self.design = build.full_fact(pars)
         elif self.type == 'Sobol sequence':
-            from ax.modelbridge.generation_strategy import GenerationStep, GenerationStrategy
-            from ax.modelbridge.registry import Models
+            from ax.adapter.registry import Generators
+            from ax.generation_strategy.generation_node import GenerationStep
+            from ax.generation_strategy.generation_strategy import GenerationStrategy
             from ax.service.ax_client import AxClient, ObjectiveProperties
 
             ax_client = AxClient()
@@ -416,18 +417,19 @@ class DesignOfExperiments:
             )
             gs = GenerationStrategy(
                 steps=[GenerationStep(
-                    model=Models.SOBOL,
+                    generator=Generators.SOBOL,
                     num_trials=-1,
                     should_deduplicate=True,
                     model_kwargs={"seed": self.seed},
                     model_gen_kwargs={},
                 )]
             )
-            generator_run = gs.gen(
+            generated_runs = gs.gen(
                 experiment=ax_client.experiment,
                 data=None,
                 n=self.Nexp
             )
+            generator_run = generated_runs[0][0]
             if self.Nexp == 1:
                 ax_client.experiment.new_trial(generator_run)
             else:
@@ -438,7 +440,8 @@ class DesignOfExperiments:
                                                       'trial_status',
                                                       'arm_name',
                                                       'generation_method',
-                                                      'generation_node'])
+                                                      'generation_node'],
+                                           errors='ignore')
         elif self.type == 'Fractional Factorial':
             for par in range(len(self.parameters)):
                 if self.parameters[par]['type'] == "Numerical":

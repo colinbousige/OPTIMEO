@@ -8,11 +8,15 @@
 
 import streamlit as st
 import numpy as np
-from resources.functions import *
+from ast import literal_eval
+from resources.functions import about_items, check_data, load_data_widget, read_markdown_file, write_poly
+from janitor import clean_names
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from optimeo.analysis import *
+from optimeo.analysis import DataAnalysis
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from scipy.stats import t
 
 st.set_page_config(page_title="Data Analysis and Modeling", 
@@ -357,7 +361,7 @@ Default parameters will be used if you do not specify them, they are:
     - `{"n_estimators": 100,"learning_rate": 0.1,"max_depth": 3, "random_state": 42}`""")
         if kwargs != "":
             try:
-                kwargs = eval(kwargs)
+                kwargs = literal_eval(kwargs)
             except Exception as e:
                 st.error(f"Error in evaluating the additional parameters: {e}")
                 kwargs = {}

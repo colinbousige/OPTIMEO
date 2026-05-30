@@ -1,4 +1,4 @@
-# run with "streamlit run Home.py"
+# launch with "optimeo"
 
 import streamlit as st
 from resources.functions import *
@@ -53,7 +53,20 @@ This app was developed within the frame of an academic research project, MOFSONG
 
 ### With the web app
 
-You can use the app directly on its [Streamlit.io web page](https://optimeo.streamlit.app/), or run it locally (see [Installation](https://colinbousige.github.io/OPTIMEO/optimeo.html#installation)).
+You can use the app on [Streamlit.io](https://optimeo.streamlit.app/) or run it locally (see [Installation](https://colinbousige.github.io/OPTIMEO/optimeo.html#installation)). Local execution is recommended if you process many rows or use heavier BO/modeling tasks.
+
+After installation, run the app with:
+
+```bash
+optimeo
+```
+
+If the command is not found, activate your environment and retry:
+
+```bash
+source .venv/bin/activate # Linux / macOS
+optimeo
+```
 
 Choose the page you want to use in the sidebar, and follow the instructions. Hover the mouse on the question marks to get more information about the parameters.
 
@@ -61,7 +74,9 @@ Choose the page you want to use in the sidebar, and follow the instructions. Hov
 Generate a Design of Experiment (DoE) for the optimization of your process. Depending on the number of factors and levels, you can choose between different types of DoE, such as Sobol sequence, Full Factorial, Fractional Factorial, or Definitive Screening Design.
 
 **2. New experiments using Bayesian Optimization:**  
-From a previous set of experiments and their results, generate a new set of experiments to optimize your process. You can use up to 10 outcomes, of which 2 can be objectives (i.e. outcomes that you want to minimize or maximize) and the outcomes that are not objectives can be constrained.  
+From a previous set of experiments and their results, generate a new set of experiments to optimize your process. You can define up to 10 outcomes. Any subset of outcomes can be marked as optimization objectives (maximize/minimize), and the others can be used as constraints.
+
+The BO page also provides model interpretation plots, including Ax Sensitivity Analysis.
 
 **3. Data analysis and modeling:**  
 Analyze the results of your experiments and model the response of your process.

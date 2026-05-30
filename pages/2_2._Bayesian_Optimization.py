@@ -14,7 +14,8 @@ warnings.simplefilter(action='ignore', category=DeprecationWarning)
 warnings.simplefilter(action='ignore', category=UserWarning)
 warnings.simplefilter(action='ignore', category=RuntimeError)
 from resources.functions import *
-from optimeo.bo import *
+from botorch.acquisition.analytic import UpperConfidenceBound
+from optimeo.bo import BOExperiment
 import pandas as pd
 import numpy as np
 from resources.functions import about_items
@@ -225,7 +226,7 @@ with tabs[1]:# Bayesian Optimization
         container = st.container(border=True)
         container.write("#### Model options")
         if len(responses) > 2:
-            container.info("You have defined more than two outcomes. Know that you can only optimize up to **two** ojectives using this web app. The other outcomes need to be set to **Not an objective**, and you can use them to define outcomes constraints. If you really want to optimize more than two ojectives at once: first, ask yourself if this is really needed for your process. If it is, then either write your own code using the package version of OPTIMEO (as it handles more than two objectives), or contact the author to make an update to the web app.", icon="ℹ️")
+            container.info("You have defined more than two outcomes. This version supports optimizing more than two objectives. Note that Pareto visualization for 3+ objectives is shown as a scatter-matrix of objective trade-offs.", icon="ℹ️")
         containerplot = st.container(border=True)
         cols = container.columns(4)
         maximize = {}
@@ -245,9 +246,6 @@ with tabs[1]:# Bayesian Optimization
         nmetrics = len([v for v in maximize.values() if v is not None])
         if nmetrics == 0:
             cols[0].warning("You need to select at least one objective to optimize.", icon="⚠️")
-            st.session_state['model_up_to_date'] = True
-        if nmetrics > 2:
-            cols[0].warning("You can only optimize up to two objectives at once.", icon="⚠️")
             st.session_state['model_up_to_date'] = True
         Nexp = cols[2].number_input("Number of new experiments", 
                 min_value=1, value=1, max_value=100, 
@@ -411,6 +409,7 @@ The results may vary slightly each time you run it."""):
             cols[1].dataframe(st.session_state['best'], hide_index=True)
         figmod = []
         figopt = None
+        figimp = None
         # add a button to launch pareto frontiers plotting
         containerplot.write("#### Plot options")
         # add help about slicing parameters in a tooltip
@@ -479,6 +478,7 @@ The colors transition smoothly:
                                                 ))
             if len(responses) == 1:
                 figopt = st.session_state['bo'].plot_optimization_trace()
+            figimp = st.session_state['bo'].plot_feature_importances()
             if figmod is not None and count>0:
                 for i in range(len(toplot)):
                     st.plotly_chart(figmod[i], key=f"figmod{i}")
@@ -487,9 +487,13 @@ The colors transition smoothly:
                            icon="⚠️")
             if figopt is not None:
                 st.plotly_chart(figopt, key=f"figopt")
+            if figimp is not None:
+                st.plotly_chart(figimp, key="figimp")
+            else:
+                st.warning("Sensitivity Analysis plot could not be generated for the current model.", icon="⚠️")
         colos = containerplot.columns([1,1,1,2])
         if (st.session_state['bo'] is not None and 
-            len(responses) >1 and
+            nmetrics > 1 and
             # st.session_state['plot_up_to_date'] == True and
             st.session_state['bo'].model is not None and
             colos[0].button("Compute Pareto frontiers", 
@@ -498,16 +502,21 @@ The colors transition smoothly:
                            on_click=pareto_front_updated)):
                 paretofront = st.session_state['bo'].compute_pareto_frontier()        
         if (st.session_state['bo'] is not None and 
-            len(responses) >1 and
+            nmetrics > 1 and
             st.session_state['bo'].model is not None and
             st.session_state['pareto_front_up_to_date'] == True):
                 figpareto = None
-                if colos[1].button("Plot Pareto frontiers **with** error bars", type="primary"):
-                    figpareto = st.session_state['bo'].plot_pareto_frontier(
-                        show_error_bars=True)
-                if colos[2].button("Plot Pareto frontiers **without** error bars", type="primary"):
-                    figpareto = st.session_state['bo'].plot_pareto_frontier(
-                        show_error_bars=False)
+                if nmetrics == 2:
+                    if colos[1].button("Plot Pareto frontiers **with** error bars", type="primary"):
+                        figpareto = st.session_state['bo'].plot_pareto_frontier(
+                            show_error_bars=True)
+                    if colos[2].button("Plot Pareto frontiers **without** error bars", type="primary"):
+                        figpareto = st.session_state['bo'].plot_pareto_frontier(
+                            show_error_bars=False)
+                else:
+                    if colos[1].button("Plot Pareto trade-off matrix", type="primary"):
+                        figpareto = st.session_state['bo'].plot_pareto_frontier(
+                            show_error_bars=False)
                 if figpareto is not None:
                     st.plotly_chart(figpareto, key="figparetoplot")
 

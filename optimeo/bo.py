@@ -26,11 +26,14 @@ import random
 from janitor import clean_names
 from typing import Any, Dict, List, Optional, Union, Tuple
 
-from ax.core.observation import ObservationFeatures, TrialStatus
-from ax.modelbridge.generation_strategy import GenerationStep, GenerationStrategy
-from ax.modelbridge.modelbridge_utils import get_pending_observation_features
-from ax.modelbridge.registry import Models
+from ax.adapter.registry import Generators
+from ax.core.observation import ObservationFeatures
+from ax.core.trial_status import TrialStatus
+from ax.generation_strategy.generation_node import GenerationStep
+from ax.generation_strategy.generation_strategy import GenerationStrategy
+from ax.analysis.plotly.sensitivity import SensitivityAnalysisPlot
 from ax.plot.contour import interact_contour, plot_contour
+from ax.plot.feature_importances import plot_feature_importance_by_feature_plotly
 from ax.plot.pareto_frontier import plot_pareto_frontier
 from ax.plot.pareto_utils import compute_posterior_pareto_frontier
 from ax.plot.slice import plot_slice
@@ -39,7 +42,7 @@ from botorch.acquisition.analytic import *
 import plotly.graph_objects as go
 import plotly.express as px
 import re
-import matplotlib.cm as cm
+import matplotlib as mpl
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
@@ -663,7 +666,7 @@ Input data:
         Set the model to be used for predictions.
         This method is called after initializing the AxClient.
         """
-        self.model = Models.BOTORCH_MODULAR(
+        self.model = Generators.BOTORCH_MODULAR(
                 experiment=self.ax_client.experiment,
                 data=self.ax_client.experiment.fetch_data()
                 )
@@ -680,7 +683,7 @@ Input data:
             if self.acq_func is None:
                 self.gs = GenerationStrategy(
                     steps=[GenerationStep(
-                                model=Models.BOTORCH_MODULAR,
+                                generator=Generators.BOTORCH_MODULAR,
                                 num_trials=-1,  # No limitation on how many trials should be produced from this step
                                 max_parallelism=3,  # Parallelism limit for this step, often lower than for Sobol
                             )
@@ -689,19 +692,21 @@ Input data:
             else:
                 self.gs = GenerationStrategy(
                     steps=[GenerationStep(
-                                model=Models.BOTORCH_MODULAR,
+                                generator=Generators.BOTORCH_MODULAR,
                                 num_trials=-1,  # No limitation on how many trials should be produced from this step
                                 max_parallelism=3,  # Parallelism limit for this step, often lower than for Sobol
-                                model_configs={"botorch_model_class": self.acq_func['acqf']},
-                                model_kwargs={"seed": self.seed},  # Any kwargs you want passed into the model
-                                model_gen_options={"acquisition_options": self.acq_func['acqf_kwargs']}
+                                model_kwargs={
+                                    "seed": self.seed,
+                                    "botorch_acqf_class": self.acq_func['acqf'],
+                                    "botorch_acqf_options": self.acq_func['acqf_kwargs'],
+                                },
                             )
                         ]
                     )
         elif self._optim == 'sobol':
             self.gs = GenerationStrategy(
                 steps=[GenerationStep(
-                            model=Models.SOBOL,
+                            generator=Generators.SOBOL,
                             num_trials=-1,  # How many trials should be produced from this generation step
                             should_deduplicate=True,  # Deduplicate the trials
                             model_kwargs={"seed": self.seed},  # Any kwargs you want passed into the model
@@ -709,15 +714,14 @@ Input data:
                         )
                     ]
                 )
-        self.generator_run = self.gs.gen(
+        generated_runs = self.gs.gen(
                 experiment=self.ax_client.experiment,  # Ax `Experiment`, for which to generate new candidates
                 data=None,  # Ax `Data` to use for model training, optional.
                 n=self._N,  # Number of candidate arms to produce
                 fixed_features=self._fixed_features, 
-                pending_observations=get_pending_observation_features(
-                    self.ax_client.experiment
-                ),  # Points that should not be re-generated
+            pending_observations=None,
             )
+        self.generator_run = generated_runs[0][0]
     
     def clear_trials(self):
         """
@@ -883,10 +887,10 @@ Input data:
 
         plotly_fig = go.Figure(fig.data)
         all_trials = self.ax_client.get_trials_data_frame()
-        completed_trials = all_trials[all_trials['trial_status'] != 'CANDIDATE']
+        completed_trials = all_trials[all_trials['trial_status'] != 'CANDIDATE'].copy()
         # compute distance to slice
         col_to_consider = completed_trials[[k for k in slice_values.keys()]]
-        completed_trials['signed_dist_to_slice'] = (
+        completed_trials.loc[:, 'signed_dist_to_slice'] = (
             (col_to_consider - slice_values).sum(axis=1)  # Sum of signed differences
         )
         signed_dists = completed_trials['signed_dist_to_slice'].values
@@ -910,14 +914,14 @@ Input data:
         normalized_signed_dists[signed_dists >= 0] = normalized_positive
         normalized_signed_dists[signed_dists < 0] = normalized_negative
 
-        completed_trials['normalized_signed_dist'] = normalized_signed_dists
-        coolwarm = cm.get_cmap('bwr')
+        completed_trials.loc[:, 'normalized_signed_dist'] = normalized_signed_dists
+        coolwarm = mpl.colormaps['bwr']
         normalized_values = (completed_trials['normalized_signed_dist'] + 1) / 2  # Map from [-1,1] to [0,1]
         colors = [
             f"rgb({int(r*255)}, {int(g*255)}, {int(b*255)})"
             for r, g, b, _ in coolwarm(normalized_values)
         ]
-        completed_trials['colors'] = colors
+        completed_trials.loc[:, 'colors'] = colors
         trials = self.ax_client.get_trials_data_frame()
         trials = trials[trials['trial_status'] == 'CANDIDATE']
         trials = trials[[name for name in self.names]]
@@ -1062,6 +1066,127 @@ Input data:
         )
         return fig
 
+    def plot_feature_importances(self, relative=False):
+        """
+        Plot feature importances using Ax default Sensitivity Analysis cards
+        (same analysis family as in Ax tutorials).
+
+        Parameters
+        ----------
+        relative : bool, optional
+            Used only by the fallback Ax helper plot if analysis cards are
+            unavailable. Default is False.
+
+        Returns
+        -------
+        plotly.graph_objects.Figure:
+            Plotly figure of feature importances.
+        """
+        if self.ax_client is None:
+            self.initialize_ax_client()
+        if self.model is None:
+            self.set_model()
+
+        def _style_sensitivity_figure(fig):
+            for trace in fig.data:
+                trace_name = str(getattr(trace, "name", "") or "")
+                if "Increases" in trace_name:
+                    trace.marker.color = "#2ca02c"
+                elif "Decreases" in trace_name:
+                    trace.marker.color = "#d62728"
+
+                # Keep bars centered on category rows for cleaner label alignment.
+                if getattr(trace, "type", None) == "bar":
+                    trace.width = 0.85
+                    trace.offsetgroup = None
+                    trace.alignmentgroup = None
+
+                hovertemplate = getattr(trace, "hovertemplate", None)
+                if hovertemplate is not None:
+                    hovertemplate = hovertemplate.replace("truncated_parameter_name=%{y}<br>", "")
+                    hovertemplate = hovertemplate.replace("truncated_parameter_name=%{y}<br />", "")
+                    trace.hovertemplate = hovertemplate
+
+            fig.update_layout(barmode="overlay")
+            fig.update_yaxes(title_text="")
+            fig.update_xaxes(title_text="Importance")
+            return fig
+
+        metric_names = list(self.ax_client.objective_names)
+        if len(metric_names) == 0:
+            return None
+
+        figures = []
+        labels = []
+        for metric_name in metric_names:
+            try:
+                card = SensitivityAnalysisPlot(metric_name=metric_name).compute(
+                    experiment=self.ax_client.experiment,
+                    generation_strategy=self.gs,
+                    adapter=self.model,
+                )
+                figures.append(_style_sensitivity_figure(card.get_figure()))
+                labels.append(metric_name)
+            except (AttributeError, RuntimeError, ValueError, TypeError, KeyError):
+                continue
+
+        if len(figures) == 0:
+            # Fallback to legacy Ax plot helper if analysis cards are unavailable.
+            try:
+                fig = plot_feature_importance_by_feature_plotly(
+                    model=self.model,
+                    relative=relative,
+                )
+                return _style_sensitivity_figure(fig)
+            except (AttributeError, RuntimeError, ValueError, TypeError, KeyError):
+                return None
+
+        if len(figures) == 1:
+            return _style_sensitivity_figure(figures[0])
+
+        merged = go.Figure()
+        trace_blocks = []
+        for fig in figures:
+            start = len(merged.data)
+            for tr in fig.data:
+                merged.add_trace(tr)
+            end = len(merged.data)
+            trace_blocks.append((start, end))
+
+        for i, (start, end) in enumerate(trace_blocks):
+            for j, _ in enumerate(merged.data):
+                merged.data[j].visible = (i == 0 and start <= j < end)
+
+        buttons = []
+        for i, metric_name in enumerate(labels):
+            vis = [False] * len(merged.data)
+            start, end = trace_blocks[i]
+            for j in range(start, end):
+                vis[j] = True
+            button = {
+                "label": metric_name,
+                "method": "update",
+                "args": [
+                    {"visible": vis},
+                    {"title": f"Sensitivity Analysis for {metric_name}"},
+                ],
+            }
+            buttons.append(button)
+
+        merged.update_layout(figures[0].layout)
+        merged.update_layout(
+            updatemenus=[
+                {
+                    "x": 1.0,
+                    "xanchor": "right",
+                    "y": 1.15,
+                    "yanchor": "top",
+                    "buttons": buttons,
+                }
+            ]
+        )
+        return _style_sensitivity_figure(merged)
+
     def compute_pareto_frontier(self):
         """
         Compute the Pareto frontier for multi-objective optimization experiments.
@@ -1075,16 +1200,20 @@ Input data:
         if len(self._outcomes) < 2:
             print("Pareto frontier is not available for single-objective optimization.")
             return None
-        
-        objectives = self.ax_client.experiment.optimization_config.objective.objectives
-        self.pareto_frontier = compute_posterior_pareto_frontier(
-            experiment=self.ax_client.experiment,
-            data=self.ax_client.experiment.fetch_data(),
-            primary_objective=objectives[1].metric,
-            secondary_objective=objectives[0].metric,
-            absolute_metrics=[o.metric_names[0] for o in objectives],
-            num_points=20,
-        )
+
+        if self.Nmetrics == 2:
+            objectives = self.ax_client.experiment.optimization_config.objective.objectives
+            self.pareto_frontier = compute_posterior_pareto_frontier(
+                experiment=self.ax_client.experiment,
+                data=self.ax_client.experiment.fetch_data(),
+                primary_objective=objectives[1].metric,
+                secondary_objective=objectives[0].metric,
+                absolute_metrics=[o.metric.name for o in objectives],
+                num_points=20,
+            )
+        else:
+            # For 3+ objectives, keep Pareto-optimal points and visualize in plot_pareto_frontier.
+            self.pareto_frontier = self.ax_client.get_pareto_optimal_parameters()
         return self.pareto_frontier
     
     def plot_pareto_frontier(self, show_error_bars=True):
@@ -1103,18 +1232,31 @@ Input data:
         """
         if self.pareto_frontier is None:
             return None
+
+        if self.Nmetrics > 2:
+            df = ordered_dict_to_dataframe(self.pareto_frontier)
+            objective_names = [name for name in self.ax_client.objective_names if name in df.columns]
+            if len(objective_names) < 2:
+                return None
+            fig = px.scatter_matrix(
+                df,
+                dimensions=objective_names,
+                hover_data=[name for name in self.names if name in df.columns],
+                title="Pareto-optimal objective trade-offs",
+            )
+            fig.update_traces(diagonal_visible=False)
+        else:
+            fig = plot_pareto_frontier(self.pareto_frontier)
+            fig = go.Figure(fig.data)
         
-        fig = plot_pareto_frontier(self.pareto_frontier)
-        fig = go.Figure(fig.data)
-        
-        # Modify traces to show/hide error bars
-        if not show_error_bars:
-            for trace in fig.data:
-                # Remove error bars by setting them to None
-                if hasattr(trace, 'error_x') and trace.error_x is not None:
-                    trace.error_x = None
-                if hasattr(trace, 'error_y') and trace.error_y is not None:
-                    trace.error_y = None
+            # Modify traces to show/hide error bars
+            if not show_error_bars:
+                for trace in fig.data:
+                    # Remove error bars by setting them to None
+                    if hasattr(trace, 'error_x') and trace.error_x is not None:
+                        trace.error_x = None
+                    if hasattr(trace, 'error_y') and trace.error_y is not None:
+                        trace.error_y = None
         
         fig.update_layout(
             plot_bgcolor="white",  # White background

@@ -1,4 +1,4 @@
-ax-platform==0.5.0
+ax-platform==1.2.1
 definitive_screening_design==0.5.0
 dexpy==0.12
 doepy==0.0.1

@@ -7,7 +7,7 @@ name = "optimeo"
 version = "1.0"
 description = "OPTIMEO: Bayesian Optimization Web App for Process Tuning, Modeling, and Orchestration"
 readme = "README.md"
-requires-python = ">=3.6"
+requires-python = ">=3.10"
 license = {text = "MIT License"}
 authors = [
     {name = "Colin Bousige", email = "colin.bousige@cnrs.fr"}
@@ -18,7 +18,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "ax-platform==0.5.0",
+    "ax-platform==1.2.1",
     "definitive_screening_design==0.5.0",
     "dexpy==0.12",
     "doepy==0.0.1",
@@ -41,6 +41,9 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/colinbousige/OPTIMEO"
 Repository = "https://github.com/colinbousige/OPTIMEO"
+
+[project.scripts]
+optimeo = "optimeo.__main__:main"
 
 [tool.setuptools.packages.find]
 include = ["optimeo*"]

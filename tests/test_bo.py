@@ -32,6 +32,8 @@ def test_initialization():
     assert fig is not None
     fig = experiment.plot_model(metricname='Yield', slice_values={'Temperature': 50})
     assert fig is not None
+    fig = experiment.plot_feature_importances()
+    assert fig is not None
     experiment.compute_pareto_frontier()
     fig = experiment.plot_pareto_frontier()
     assert fig is not None
@@ -39,5 +41,26 @@ def test_initialization():
     assert isinstance(best_params, pd.DataFrame)
     with pytest.raises(ValueError):
         experiment.update_experiment({'bad_column': [1, 2]}, {'Yield': [0.5, 0.6], 'Price': [100, 200]})
+
+
+def test_three_objectives():
+    """Test that 3-objective optimization initializes and Pareto plotting works."""
+    outcomes3 = {
+        "Yield": outcomes["Yield"],
+        "Price": outcomes["Price"],
+        "Purity": {"type": "float", "data": [0.1 * y + 0.9 * p for y, p in zip(outcomes["Yield"]["data"], outcomes["Price"]["data"]) ]},
+    }
+    experiment = BOExperiment(
+        features,
+        outcomes3,
+        N=2,
+        maximize={"Yield": True, "Price": False, "Purity": True},
+    )
+    next_trial = experiment.suggest_next_trials()
+    assert isinstance(next_trial, pd.DataFrame)
+    pareto = experiment.compute_pareto_frontier()
+    assert pareto is not None
+    fig = experiment.plot_pareto_frontier(show_error_bars=False)
+    assert fig is not None
 
 

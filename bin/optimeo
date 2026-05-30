@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
 
-# change this to your own path to where the Home.py file is located
-cd /Users/colin/Travail/Scripts/Optimization/OPTIMEO/
-# activate the conda/mamba environment if any
-eval "$(mamba shell hook --shell bash)"
-mamba activate optimeo
-# 
-# don't change this:
-streamlit run Home.py
+set -euo pipefail
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+project_root="$(cd "${script_dir}/.." && pwd)"
+
+if command -v python3 >/dev/null 2>&1; then
+	python_cmd="python3"
+else
+	python_cmd="python"
+fi
+
+exec "${python_cmd}" -m streamlit run "${project_root}/Home.py" "$@"

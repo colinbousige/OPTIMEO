@@ -367,7 +367,7 @@ with tab3:
     design['response'] = ''
     timestamp = datetime.today().strftime('%Y-%m-%d_%H:%M:%S')
     outfile = writeout(design)
-    cols= st.columns([4,1,1,7])
+    cols= st.columns([4,1,1,2])
     cols[0].write(f"Download Experimental Design with {len(design)} runs:")
     cols[1].download_button(
         label     = f"CSV",

@@ -15,6 +15,7 @@ warnings.simplefilter(action='ignore', category=UserWarning)
 warnings.simplefilter(action='ignore', category=RuntimeError)
 from resources.functions import *
 from botorch.acquisition.analytic import UpperConfidenceBound
+from botorch.acquisition.monte_carlo import qUpperConfidenceBound
 from optimeo.bo import BOExperiment
 import pandas as pd
 import numpy as np
@@ -324,13 +325,15 @@ The constraints should be in the form of inequalities such as:
 
         acq_function = None
         tuning = cols[1].toggle("Allow tuning Optimization vs Exploitation?",
-                                disabled=False if Nexp==1 else True,
+                    disabled=False,
                                 value=False,
-                                help="""⚠️ **This will only work for a single number of experiment**.
-                                
-⚠️ **If you don't really know what you are doing, just stick with the default acquisition function and switch this off.**
+                    help="""⚠️ **If you don't really know what you are doing, just stick with the default acquisition function and switch this off.**
 
-By default, the acquisition function that is used is the logarithm of the Expected Improvement (EI), providing a good balance between exploration and exploitation. If you check this box, the acquisition function will be the Upper Confidence Bound (UCB), which allows you to tune the balance between exploration and exploitation.
+By default, the acquisition function provides a balanced optimization/exploration behavior.
+If you check this box, OPTIMEO uses Upper Confidence Bound (UCB), which lets you control this balance explicitly.
+
+- For `Nexp = 1`: analytic UCB (`UpperConfidenceBound`)
+- For `Nexp > 1`: batch UCB (`qUpperConfidenceBound`)
 
 The UCB is defined as:
 
@@ -342,24 +345,42 @@ A higher value of $\\beta$ will lead to more exploration, while a lower value wi
 
 """)
         if tuning:
+            if "beta_tuning" not in st.session_state:
+                st.session_state["beta_tuning"] = 1.0
+
+            preset_values = {
+                "Exploit": 0.1,
+                "Balanced": 1.0,
+                "Explore": 5.0,
+            }
+            preset = cols[1].selectbox(
+                "Tuning preset",
+                ["Exploit", "Balanced", "Explore", "Custom"],
+                index=1,
+                on_change=model_changed,
+                help="Preset values for UCB beta. Choose Custom to enter your own beta.",
+            )
+            if preset != "Custom":
+                st.session_state["beta_tuning"] = preset_values[preset]
+
             beta = cols[1].number_input("Tuning parameter $\\beta$", 
                                 min_value=0., 
-                                value = 1.0,
-                                step = 1.000,
+                                value = st.session_state["beta_tuning"],
+                                step = 0.1,
                                 format="%0.8f",
+                                key="beta_tuning",
+                                disabled=(preset != "Custom"),
                                 on_change = model_changed,
                                 help="""Tuning parameter for the UCB acquisition function.
 
 - A **higher** value will lead to more **exploration**,
 - A **lower** value will lead to more **exploitation**.""")
-            if Nexp==1:
+            if Nexp == 1:
                 acq_function = {'acqf': UpperConfidenceBound, 
-                                'acqf_kwargs': {'beta': 10**beta}}
+                                'acqf_kwargs': {'beta': float(beta)}}
             else:
-                st.warning("""The UCB acquisition function is only available for a single number of experiment. 
-                           
-**-> Switching back to the default acquisition function, logEI.**""", icon="⚠️")
-                acq_function = None
+                acq_function = {'acqf': qUpperConfidenceBound,
+                                'acqf_kwargs': {'beta': float(beta)}}
         
         # Perform Bayesian optimization
         colos = container.columns([6,1])

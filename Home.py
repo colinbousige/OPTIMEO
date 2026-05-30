@@ -36,6 +36,7 @@ st.markdown("""
 - [Support](#support)
 - [How to cite](#how-to-cite)
 - [Documentation](#documentation)
+- [Changelog](#changelog)
 - [Acknowledgements](#acknowledgements)
 - [License](#license)
 
@@ -115,6 +116,12 @@ This work has been published in the article "OPTIMEO: Bayesian Optimization Web 
 ## Documentation
 
 The package documentation is available on the [GitHub page of the app](https://colinbousige.github.io/OPTIMEO/optimeo.html).
+
+---
+
+## Changelog
+
+Release notes are available in [CHANGELOG.md](https://github.com/colinbousige/OPTIMEO/blob/main/CHANGELOG.md). Current release: **v1.2**.
 
 ---
 

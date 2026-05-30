@@ -26,6 +26,12 @@ This package was developed within the frame of an academic research project, MOF
 
 ---
 
+## Changelog
+
+Release notes are available in [CHANGELOG.md](https://github.com/colinbousige/OPTIMEO/blob/main/CHANGELOG.md). Current release: **v1.2**.
+
+---
+
 ## Installation
 
 ### Installing the package

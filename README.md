@@ -17,6 +17,11 @@ This package was developed within the frame of an academic research project, MOF
 
 The package documentation is available [here](https://colinbousige.github.io/OPTIMEO/optimeo.html).
 
+## Changelog
+
+Release notes are available in [CHANGELOG.md](CHANGELOG.md).  
+Current release: **v1.2**.
+
 ## Installation
 
 ### Installing the package

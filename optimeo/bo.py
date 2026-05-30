@@ -620,11 +620,14 @@ Input data:
         self.parameters = []
         for name, info in self._features.items():
             if info['type'] == 'text':
+                values = [str(val) for val in info['range']]
                 self.parameters.append({
                     "name": name,
                     "type": "choice",
-                    "values": [str(val) for val in info['range']],
-                    "value_type": "str"})
+                    "values": values,
+                    "value_type": "str",
+                    "is_ordered": len(values) == 2,
+                    "sort_values": False})
             elif info['type'] == 'int':
                 self.parameters.append({
                     "name": name,

@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.2.2] - 2026-05-31
+
+### Fixed
+- Bumped the release version so PyPI publishes a fresh build instead of reusing the already uploaded 1.2.1 files.
+
+### Internal
+- Prepared the next tagged release after the 1.2.1 publish attempt hit PyPI file reuse protection.
+
 ## [1.2.1] - 2026-05-31
 
 ### Added

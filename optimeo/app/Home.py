@@ -121,7 +121,7 @@ The package documentation is available on the [GitHub page of the app](https://c
 
 ## Changelog
 
-Release notes are available in [CHANGELOG.md](https://github.com/colinbousige/OPTIMEO/blob/main/CHANGELOG.md). Current release: **v1.2**.
+Release notes are available in [CHANGELOG.md](https://github.com/colinbousige/OPTIMEO/blob/main/CHANGELOG.md). Current release: **v1.2.2c**.
 
 ---
 

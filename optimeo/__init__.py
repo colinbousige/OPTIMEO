@@ -19,6 +19,6 @@ You can also install with ``pip`` or directly from GitHub:
     python -m pip install "git+https://github.com/colinbousige/OPTIMEO.git"
 """
 
-__version__ = "1.2.2b0"
+__version__ = "1.2.2c0"
 
 __all__ = ["__version__"]

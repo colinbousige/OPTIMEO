@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.2.2b0] - 2026-05-31
+
+### Fixed
+- Updated the launcher so `optimeo` starts the packaged Streamlit app from `optimeo/app/Home.py`.
+
+### Internal
+- Prepared a pre-release after the `1.2.2` PyPI publish to validate the launcher fix without reusing the existing release files.
+
 ## [1.2.2] - 2026-05-31
 
 ### Fixed

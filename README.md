@@ -27,7 +27,7 @@ It is generated automatically by the GitHub Actions workflow on pushes to `main`
 ## Changelog
 
 Release notes are available in [CHANGELOG.md](CHANGELOG.md).  
-Current release: **v1.2.2**.
+Current release: **v1.2.2b**.
 
 ## Installation
 
@@ -35,23 +35,23 @@ Current release: **v1.2.2**.
 
 Installing the package and its dependencies should take up about 1.3 GB on your hard disk, the main "heavy" dependencies being `botorch`, `scikit_learn`, `plotly`, `scipy`, `pandas` and `streamlit`.
 
-#### Recommended: install from PyPI with pip
+#### Recommended: install from PyPI with uv
+
+```bash
+uv venv .venv --python 3.10
+source .venv/bin/activate # Linux / macOS
+uv pip install optimeo
+```
+
+This installs OPTIMEO from PyPI and registers the `optimeo` command in your environment.
+
+#### Alternative: install from PyPI with pip
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate # Linux / macOS
 python -m pip install --upgrade pip
 python -m pip install optimeo
-```
-
-This installs OPTIMEO from PyPI and registers the `optimeo` command in your environment.
-
-#### Alternative: install from PyPI with uv
-
-```bash
-uv venv .venv --python 3.10
-source .venv/bin/activate # Linux / macOS
-uv pip install optimeo
 ```
 
 #### Install from GitHub

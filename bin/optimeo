@@ -11,4 +11,4 @@ else
 	python_cmd="python"
 fi
 
-exec "${python_cmd}" -m streamlit run "${project_root}/Home.py" "$@"
+exec "${python_cmd}" -m optimeo "$@"

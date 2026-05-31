@@ -3,7 +3,7 @@
 [![Tests](https://github.com/colinbousige/OPTIMEO/actions/workflows/python-app.yml/badge.svg)](https://github.com/colinbousige/OPTIMEO/actions/workflows/python-app.yml)
 [![Documentation](https://github.com/colinbousige/OPTIMEO/actions/workflows/build-docs.yml/badge.svg)](https://colinbousige.github.io/OPTIMEO/optimeo.html)
 
-# OPTIMEO – Bayesian Optimization Web App for Process Tuning, Modeling, and Orchestration <img src="resources/logo.png" width="100"/>
+# OPTIMEO – Bayesian Optimization Web App for Process Tuning, Modeling, and Orchestration <img src="optimeo/app/resources/logo.png" width="100"/>
 
 ## About this package
 
@@ -16,6 +16,7 @@ This package was developed within the frame of an academic research project, MOF
 ## Documentation
 
 The package documentation is available [here](https://colinbousige.github.io/OPTIMEO/optimeo.html).
+It is generated automatically by the GitHub Actions workflow on pushes to `main` and published to GitHub Pages.
 
 ## Changelog
 
@@ -28,34 +29,39 @@ Current release: **v1.2**.
 
 Installing the package and its dependencies should take up about 1.3 GB on your hard disk, the main "heavy" dependencies being `botorch`, `scikit_learn`, `plotly`, `scipy`, `pandas` and `streamlit`.
 
-#### Recommended: install with uv
+#### Recommended: install from PyPI with pip
 
 ```bash
-git clone https://github.com/colinbousige/OPTIMEO.git
-cd OPTIMEO
-uv venv .venv --python 3.10
-source .venv/bin/activate # Linux / macOS
-uv sync
-```
-
-This installs all dependencies and registers the `optimeo` command in this environment.
-
-#### Alternative: install with pip
-
-```bash
-git clone https://github.com/colinbousige/OPTIMEO.git
-cd OPTIMEO
-# Optional: create and activate a virtual environment
 python -m venv .venv
 source .venv/bin/activate # Linux / macOS
-pip install .
+python -m pip install --upgrade pip
+python -m pip install optimeo
+```
+
+This installs OPTIMEO from PyPI and registers the `optimeo` command in your environment.
+
+#### Alternative: install from PyPI with uv
+
+```bash
+uv venv .venv --python 3.10
+source .venv/bin/activate # Linux / macOS
+uv pip install optimeo
+```
+
+#### Install from GitHub
+
+To install the latest code directly from the repository, use:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate # Linux / macOS
+python -m pip install "git+https://github.com/colinbousige/OPTIMEO.git"
 ```
 
 You can upgrade or uninstall when using pip:
 
 ```bash
-cd OPTIMEO
-pip install --upgrade .
+python -m pip install --upgrade optimeo
 pip uninstall optimeo
 ```
 
@@ -95,7 +101,21 @@ The BO page also provides model interpretation plots, including Ax Sensitivity A
 **3. Data analysis and modeling:**  
 Analyze the results of your experiments and model the response of your process.
 
-### Quick local workflow
+### Quick local workflow from a clone
+
+Create the `.venv` environment, activate it, install the project, then launch the app:
+
+```bash
+git clone https://github.com/colinbousige/OPTIMEO.git
+cd OPTIMEO
+python -m venv .venv
+source .venv/bin/activate # Linux / macOS
+python -m pip install --upgrade pip
+python -m pip install -e .
+optimeo
+```
+
+If you prefer uv:
 
 ```bash
 git clone https://github.com/colinbousige/OPTIMEO.git

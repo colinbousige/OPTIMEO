@@ -9,13 +9,14 @@ from typing import Sequence
 def main(argv: Sequence[str] | None = None) -> int:
     """Launch the Streamlit app entrypoint for OPTIMEO."""
     args = list(argv) if argv is not None else sys.argv[1:]
-    home_py = pathlib.Path(__file__).resolve().parents[1] / "Home.py"
+    app_dir = pathlib.Path(__file__).resolve().parent / "app"
+    home_py = app_dir / "Home.py"
 
     if not home_py.exists():
         raise FileNotFoundError(f"Could not find app entrypoint at {home_py}")
 
     cmd = [sys.executable, "-m", "streamlit", "run", str(home_py), *args]
-    return subprocess.call(cmd)
+    return subprocess.call(cmd, cwd=str(app_dir))
 
 
 if __name__ == "__main__":

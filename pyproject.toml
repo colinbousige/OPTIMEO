@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "optimeo"
-version = "1.2"
+version = "1.2.1"
 description = "OPTIMEO: Bayesian Optimization Web App for Process Tuning, Modeling, and Orchestration"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -47,5 +47,8 @@ optimeo = "optimeo.__main__:main"
 
 [tool.setuptools.packages.find]
 include = ["optimeo*"]
+
+[tool.setuptools.package-data]
+"optimeo.app" = ["Home.py", "pages/*", "resources/*"]
 
 

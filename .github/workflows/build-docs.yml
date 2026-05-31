@@ -32,9 +32,9 @@ jobs:
 
       - name: Generate documentation
         run: |
-          pdoc ./optimeo --logo logo.png --docformat numpy -o ./docs
-          cp resources/logo.png ./docs/
-          cp resources/logo.png ./docs/optimeo/
+          pdoc ./optimeo --logo optimeo/app/resources/logo.png --docformat numpy -o ./docs
+          cp optimeo/app/resources/logo.png ./docs/
+          cp optimeo/app/resources/logo.png ./docs/optimeo/
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3

@@ -1,5 +1,7 @@
 """OPTIMEO: Bayesian optimization, design of experiments, and data analysis tools.
 
+[![PyPI version](https://img.shields.io/pypi/v/optimeo.svg)](https://pypi.org/project/optimeo/)
+
 Install and launch with a virtual environment named ``.venv``:
 
     python -m venv .venv

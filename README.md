@@ -4,7 +4,12 @@
 [![Tests](https://github.com/colinbousige/OPTIMEO/actions/workflows/python-app.yml/badge.svg)](https://github.com/colinbousige/OPTIMEO/actions/workflows/python-app.yml)
 [![Documentation](https://github.com/colinbousige/OPTIMEO/actions/workflows/build-docs.yml/badge.svg)](https://colinbousige.github.io/OPTIMEO/optimeo.html)
 
-# OPTIMEO – Bayesian Optimization Web App for Process Tuning, Modeling, and Orchestration <img src="https://raw.githubusercontent.com/colinbousige/OPTIMEO/main/optimeo/app/resources/logo.png" width="100"/>
+
+# OPTIMEO – Bayesian Optimization Web App for Process Tuning, Modeling, and Orchestration
+
+<p align="center">
+    <img src="https://raw.githubusercontent.com/colinbousige/OPTIMEO/main/optimeo/app/resources/logo.png" alt="OPTIMEO logo" width="320" />
+</p>
 
 ## About this package
 
@@ -22,7 +27,7 @@ It is generated automatically by the GitHub Actions workflow on pushes to `main`
 ## Changelog
 
 Release notes are available in [CHANGELOG.md](CHANGELOG.md).  
-Current release: **v1.2**.
+Current release: **v1.2.1**.
 
 ## Installation
 

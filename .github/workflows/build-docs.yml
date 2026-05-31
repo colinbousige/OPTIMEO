@@ -32,7 +32,7 @@ jobs:
 
       - name: Generate documentation
         run: |
-          pdoc ./optimeo --logo optimeo/app/resources/logo.png --docformat numpy -o ./docs
+          pdoc optimeo.analysis optimeo.bo optimeo.doe --logo optimeo/app/resources/logo.png --docformat numpy -o ./docs
           cp optimeo/app/resources/logo.png ./docs/
           cp optimeo/app/resources/logo.png ./docs/optimeo/
 

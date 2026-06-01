@@ -9,7 +9,7 @@
 import streamlit as st
 import numpy as np
 from ast import literal_eval
-from resources.functions import about_items, check_data, load_data_widget, read_markdown_file, write_poly
+from resources.functions import about_items, check_data, load_data_widget, read_markdown_file, resource_path, write_poly
 from janitor import clean_names
 import pandas as pd
 import plotly.express as px
@@ -20,10 +20,10 @@ from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from scipy.stats import t
 
 st.set_page_config(page_title="Data Analysis and Modeling", 
-                   page_icon="resources/icon.png", 
+                   page_icon=resource_path("icon.png"), 
                    layout="wide", menu_items=about_items)
 
-style = read_markdown_file("resources/style.css")
+style = read_markdown_file(resource_path("style.css"))
 st.markdown(style, unsafe_allow_html=True)
 
 if not 'analysis' in st.session_state:
@@ -78,7 +78,7 @@ For Excel-like files, the first sheet will be used, and data should start in the
 """
         )
         conti = cont.columns([1,2,1])
-        conti[1].image("resources/tidy_data.jpg", caption="Example of tidy data format.")
+        conti[1].image(resource_path("tidy_data.jpg"), caption="Example of tidy data format.")
     if data is not None:
         left,right=st.columns([1,1])
         data = clean_names(data, remove_special=True, case_type='preserve')

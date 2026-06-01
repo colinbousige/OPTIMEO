@@ -6,13 +6,13 @@ from resources.functions import about_items
 
 st.set_page_config(
     page_title="OPTIMEO",
-    page_icon="resources/icon.png",
+  page_icon=resource_path("icon.png"),
     layout="wide",
     initial_sidebar_state="expanded",
     menu_items=about_items
 )
 
-style = read_markdown_file("resources/style.css")
+style = read_markdown_file(resource_path("style.css"))
 st.markdown(style, unsafe_allow_html=True)
 
 cols=st.columns([4,1])
@@ -20,7 +20,7 @@ cols[0].title("OPTIMEO")
 cols[0].subheader("Bayesian Optimization Web App for Process Tuning, Modeling, and Orchestration")
 cols[1].write('')
 cols[1].write('')
-cols[1].image("resources/logo.png", width=200)
+cols[1].image(resource_path("logo.png"), width=200)
 st.markdown("""
 [![paper](https://joss.theoj.org/papers/5df5fbe4e131d230b13fb3c98db545d8/status.svg)](https://joss.theoj.org/papers/5df5fbe4e131d230b13fb3c98db545d8)
 <a href="https://doi.org/10.5281/zenodo.15308437"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.15308437.svg" alt="DOI"></a>

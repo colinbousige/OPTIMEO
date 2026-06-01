@@ -18,9 +18,9 @@ from datetime import datetime
 import re
 
 st.set_page_config(page_title="Design Of Experiment", 
-                   page_icon="resources/icon.png",
+                   page_icon=resource_path("icon.png"),
                    layout="wide", menu_items=about_items)
-style = read_markdown_file("resources/style.css")
+style = read_markdown_file(resource_path("style.css"))
 st.markdown(style, unsafe_allow_html=True)
 
 defaultParNames = ["Temperature", "ConcentrationA", "ConcentrationB", "Reaction_time",

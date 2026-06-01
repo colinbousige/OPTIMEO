@@ -22,10 +22,10 @@ import numpy as np
 from resources.functions import about_items
 
 st.set_page_config(page_title="Bayesian Optimization",
-                   page_icon="resources/icon.png",
+                   page_icon=resource_path("icon.png"),
                    layout="wide", menu_items=about_items)
 
-style = read_markdown_file("resources/style.css")
+style = read_markdown_file(resource_path("style.css"))
 st.markdown(style, unsafe_allow_html=True)
 
 if "bo" not in st.session_state:
@@ -92,7 +92,7 @@ For Excel-like files, the first sheet will be used, and data should start in the
 """
         )
             cols = st.columns([1,2,1])
-            cols[1].image("resources/tidy_data.jpg", caption="Example of tidy data format")
+            cols[1].image(resource_path("tidy_data.jpg"), caption="Example of tidy data format")
         with st.expander("**Bayesian Optimization in simple terms**"):
             st.markdown("""**Bayesian optimization** is a strategy used to find the best settings or parameters for a system or model, especially when evaluating each setting is expensive or time-consuming. Here's a simple explanation:
 
@@ -155,7 +155,7 @@ The expected improvement balances exploration (trying new points with high uncer
 <br>
 """, unsafe_allow_html=True)
                 figi = st.slider('Bayesian Optimization step', 0, 15, 0,1)
-                display_figure(f'resources/figure_{figi}.html')
+                display_figure(resource_path(f'figure_{figi}.html'))
     if data is not None:
         data = clean_names(data, remove_special=True, case_type='preserve')
         st.session_state.loaded_data = data.copy()

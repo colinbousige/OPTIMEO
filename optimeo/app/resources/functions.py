@@ -27,6 +27,9 @@ from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.pipeline import make_pipeline
 import streamlit.components.v1 as components
 
+APP_DIR = Path(__file__).resolve().parents[1]
+RESOURCES_DIR = APP_DIR / "resources"
+
 about_items={
         'Get Help': 'mailto:colin.bousige@cnrs.fr',
         'Report a bug': "mailto:colin.bousige@cnrs.fr",
@@ -38,9 +41,36 @@ about_items={
         """
     }
 
+def resolve_app_path(path_like):
+    """Resolve app/resource paths robustly across local and Streamlit Cloud runs."""
+    path = Path(path_like)
+    if path.is_absolute():
+        return path
+
+    candidates = [
+        Path.cwd() / path,
+        APP_DIR / path,
+    ]
+
+    if path.parts and path.parts[0] == "resources":
+        rel = Path(*path.parts[1:]) if len(path.parts) > 1 else Path()
+        candidates.append(RESOURCES_DIR / rel)
+    else:
+        candidates.append(RESOURCES_DIR / path)
+
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+
+    return candidates[-1]
+
+def resource_path(filename):
+    """Return an absolute path to a file in optimeo/app/resources."""
+    return str(resolve_app_path(Path("resources") / filename))
+
 def read_markdown_file(markdown_file):
-    """Read a md file and return the content"""
-    return Path(markdown_file).read_text()
+    """Read a markdown/css file and return its content."""
+    return resolve_app_path(markdown_file).read_text(encoding="utf-8")
 
 def writeout(df: pd.DataFrame, format='csv'):
     """Write a pd.DataFrame to csv. To use with st.download_button()"""
@@ -72,8 +102,7 @@ def write_poly(pp):
     return(out)
 
 def display_figure(file_path):
-    with open(file_path, 'r') as file:
-        html_content = file.read()
+    html_content = resolve_app_path(file_path).read_text(encoding="utf-8")
     components.html(html_content, height=800)
 
 # @st.cache_data

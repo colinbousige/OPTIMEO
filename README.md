@@ -2,7 +2,7 @@
 [![paper](https://joss.theoj.org/papers/5df5fbe4e131d230b13fb3c98db545d8/status.svg)](https://joss.theoj.org/papers/5df5fbe4e131d230b13fb3c98db545d8)
 [![PyPI version](https://img.shields.io/pypi/v/optimeo.svg)](https://pypi.org/project/optimeo/)
 [![Tests](https://github.com/colinbousige/OPTIMEO/actions/workflows/python-app.yml/badge.svg)](https://github.com/colinbousige/OPTIMEO/actions/workflows/python-app.yml)
-[![Documentation](https://github.com/colinbousige/OPTIMEO/actions/workflows/build-docs.yml/badge.svg)](https://colinbousige.github.io/OPTIMEO/optimeo.html)
+[![Documentation](https://github.com/colinbousige/OPTIMEO/actions/workflows/build-docs.yml/badge.svg)](https://colinbousige.github.io/OPTIMEO/)
 
 
 # OPTIMEO – Bayesian Optimization Web App for Process Tuning, Modeling, and Orchestration
@@ -21,7 +21,7 @@ This package was developed within the frame of an academic research project, MOF
 
 ## Documentation
 
-The package documentation is available [here](https://colinbousige.github.io/OPTIMEO/optimeo.html).
+The package documentation is available [here](https://colinbousige.github.io/OPTIMEO/).
 It is generated automatically by the GitHub Actions workflow on pushes to `main` and published to GitHub Pages.
 
 ## Changelog

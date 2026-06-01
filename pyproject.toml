@@ -42,6 +42,7 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/colinbousige/OPTIMEO"
 Repository = "https://github.com/colinbousige/OPTIMEO"
+Documentation = "https://colinbousige.github.io/OPTIMEO/"
 
 [project.scripts]
 optimeo = "optimeo.__main__:main"

@@ -103,6 +103,7 @@ jobs:
               nb_path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
           PY
           PYTHONWARNINGS="ignore::DeprecationWarning" sphinx-build -b html docs/source docs/_build/html
+          cp docs/_build/html/index.html docs/_build/html/optimeo.html
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3

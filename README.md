@@ -27,7 +27,7 @@ It is generated automatically by the GitHub Actions workflow on pushes to `main`
 ## Changelog
 
 Release notes are available in [CHANGELOG.md](CHANGELOG.md).  
-Current release: **v1.2.2c**.
+Current release: **v1.3.0**.
 
 ## Installation
 
@@ -84,6 +84,12 @@ If the command is not found, activate the environment first:
 ```bash
 source .venv/bin/activate # Linux / macOS
 optimeo
+```
+
+If you encounter Streamlit watcher errors related to `torch.classes` (for example `Examining the path of torch.classes raised`), OPTIMEO now starts Streamlit with file watching disabled by default. To override this behavior manually, run:
+
+```bash
+optimeo --server.fileWatcherType=auto
 ```
 
 You can also use the hosted app directly: [https://optimeo.streamlit.app/](https://optimeo.streamlit.app/). Local execution is recommended for larger datasets.

@@ -2,6 +2,21 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.3.0] - 2026-06-01
+
+### Added
+- Editable Bayesian Optimization data table in the Data Loading tab, with inline cell editing and dynamic row management before modeling.
+
+### Changed
+- Harmonized installation guidance to make `uv` the recommended workflow consistently across README and generated docs.
+- Updated docs build workflow to include the root `optimeo` module page so published API docs stay aligned with package-level usage guidance.
+
+### Fixed
+- Default CLI launch now disables Streamlit file watching unless explicitly overridden, avoiding `torch.classes` watcher crashes in some local environments.
+
+### Internal
+- Bumped package/version metadata and user-facing release references to `1.3.0`.
+
 ## [1.2.2b0] - 2026-05-31
 
 ### Fixed

@@ -15,7 +15,22 @@ def main(argv: Sequence[str] | None = None) -> int:
     if not home_py.exists():
         raise FileNotFoundError(f"Could not find app entrypoint at {home_py}")
 
-    cmd = [sys.executable, "-m", "streamlit", "run", str(home_py), *args]
+    has_file_watcher_arg = any(
+        arg == "--server.fileWatcherType" or arg.startswith("--server.fileWatcherType=")
+        for arg in args
+    )
+    # Work around Streamlit watcher crashes with torch.classes path inspection.
+    default_streamlit_args = [] if has_file_watcher_arg else ["--server.fileWatcherType=none"]
+
+    cmd = [
+        sys.executable,
+        "-m",
+        "streamlit",
+        "run",
+        str(home_py),
+        *default_streamlit_args,
+        *args,
+    ]
     return subprocess.call(cmd, cwd=str(app_dir))
 
 

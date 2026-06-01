@@ -58,6 +58,14 @@ def pareto_front_updated():
     st.session_state.pareto_front_up_to_date = True
 
 
+def data_changed():
+    """Keep edited data in session state and invalidate computed artifacts."""
+    edited = st.session_state.get("bo_data_editor")
+    if isinstance(edited, pd.DataFrame):
+        st.session_state.loaded_data = edited.copy()
+    model_changed()
+
+
 # if "data" not in st.session_state:
 #     st.session_state['data'] = None
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
@@ -150,28 +158,54 @@ The expected improvement balances exploration (trying new points with high uncer
                 display_figure(f'resources/figure_{figi}.html')
     if data is not None:
         data = clean_names(data, remove_special=True, case_type='preserve')
+        st.session_state.loaded_data = data.copy()
+
+        st.write("##### Edit loaded data")
+        st.caption("You can directly edit cell values and add/delete rows from the table.")
+        data = st.data_editor(
+            data,
+            hide_index=False,
+            use_container_width=True,
+            num_rows="dynamic",
+            key="bo_data_editor",
+            on_change=data_changed,
+        )
+        st.session_state.loaded_data = data.copy()
+
         left, right = st.columns([3,2])
         resp = right.empty()
         fac = left.empty()
         cols = data.columns.to_numpy()
-        st.dataframe(data, hide_index=False)
-        mincol = 1 if 'run_order' in cols else 0
-        factors = fac.multiselect("Select the **parameter(s)** column(s):", 
-                data.columns, default=cols[mincol:-1],
-                on_change=model_changed)
+        if len(cols) == 0:
+            st.warning("The dataset has no columns. Add or restore at least one column to continue.", icon="⚠️")
+            factors = []
+            responses = []
+        else:
+            mincol = 1 if 'run_order' in cols else 0
+            default_factors = cols[mincol:-1] if len(cols) > 1 else []
+            factors = fac.multiselect("Select the **parameter(s)** column(s):", 
+                    data.columns, default=default_factors,
+                    on_change=model_changed)
         # response cannot be a factor, so default are all unselected columns in factor
-        available = [col for col in cols if col not in factors]
-        responses = resp.multiselect("Select the **outcome(s)** column(s):", 
-                available, max_selections=10, default=available[-1],
-                on_change=model_changed)
+            available = [col for col in cols if col not in factors]
+            default_response = [available[-1]] if len(available) > 0 else []
+            responses = resp.multiselect("Select the **outcome(s)** column(s):", 
+                    available, max_selections=10, default=default_response,
+                    on_change=model_changed)
         # add option to change type of columns
-        dtypesF = data[factors].dtypes
+        dtypesF = data[factors].dtypes if len(factors) > 0 else pd.Series(dtype="object")
         placeholder = st.empty()
         st.write("""##### Select the type and range of each parameter
 Except for categorical parameters, you can increase the ranges to allow the optimization algorithm to explore values outside the current range of measures.""")
         factor_types = {factor: dtypesF[factor] for factor in factors}
-        factor_ranges = {factor: [np.min(data[factor]), np.max(data[factor])] for factor in factors}
-        type_choice = {'object':0, 'int64':1, 'float64':2}
+        factor_ranges = {}
+        for factor in factors:
+            numeric_values = pd.to_numeric(data[factor], errors='coerce').dropna()
+            if len(numeric_values) > 0:
+                factor_ranges[factor] = [float(np.min(numeric_values)), float(np.max(numeric_values))]
+            else:
+                factor_ranges[factor] = [0.0, 1.0]
+        type_choice = {'object':0, 'int64':1, 'float64':2, 'Int64':1, 'Float64':2}
         colos = st.columns(5)
         colos[1].write("<p style='text-align:center;'><b>Type</b></p>", unsafe_allow_html=True)
         colos[2].write("<p style='text-align:center;'><b>Min</b></p>", unsafe_allow_html=True)
@@ -179,7 +213,7 @@ Except for categorical parameters, you can increase the ranges to allow the opti
         for factor in factors:
             colos = st.columns(5)
             colos[0].write(f"<p style='text-align:right;'><b>{factor}</b></p>", unsafe_allow_html=True)
-            factype = type_choice[f"{factor_types[factor]}"]
+            factype = type_choice.get(f"{factor_types[factor]}", 0)
             factor_types[factor] = colos[1].selectbox(f"Type of **{factor}**", 
                 ['Categorical', 'Integer', 'Float'], key=f"type_{factor}", 
                 index = factype, label_visibility='collapsed', on_change=model_changed)

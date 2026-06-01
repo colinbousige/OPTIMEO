@@ -28,6 +28,11 @@ jobs:
       - name: Install documentation dependencies
         run: pip install -r docs/requirements.txt
 
+      - name: Install pandoc
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pandoc
+
       - name: Generate documentation
         run: |
           cp CHANGELOG.md docs/source/CHANGELOG.md

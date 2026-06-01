@@ -35,6 +35,28 @@ jobs:
           pdoc optimeo optimeo.analysis optimeo.bo optimeo.doe --logo logo.png --docformat numpy -o ./docs
           cp optimeo/app/resources/logo.png ./docs/
           cp optimeo/app/resources/logo.png ./docs/optimeo/
+          cat > ./docs/index.html << 'EOF'
+          <!doctype html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>OPTIMEO Documentation</title>
+          </head>
+          <body>
+            <h1>OPTIMEO Documentation</h1>
+            <ul>
+              <li><a href="optimeo.html">Package Overview</a></li>
+              <li><a href="optimeo/analysis.html">Analysis API</a></li>
+              <li><a href="optimeo/bo.html">Bayesian Optimization API</a></li>
+              <li><a href="optimeo/doe.html">Design of Experiments API</a></li>
+              <li><a href="examples/MLanalysis.html">Examples: ML Analysis</a></li>
+              <li><a href="examples/bo.html">Examples: Bayesian Optimization</a></li>
+              <li><a href="examples/doe.html">Examples: Design of Experiments</a></li>
+            </ul>
+          </body>
+          </html>
+          EOF
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3

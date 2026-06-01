@@ -1,0 +1,15 @@
+:root {
+  --pst-font-size-h1: 2.3rem;
+}
+
+.bd-main .bd-content .bd-article-container {
+  max-width: 72rem;
+}
+
+.bd-header .navbar-brand img {
+  max-height: 48px;
+}
+
+.bd-sidebar-primary {
+  border-right: 1px solid var(--pst-color-border);
+}

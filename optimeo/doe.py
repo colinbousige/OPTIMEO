@@ -42,8 +42,27 @@ class DesignOfExperiments:
     This class allows the user to specify the type of design, the parameters,
     and various options for the design generation.
     The design can be visualized using scatter plots.
-    
-    
+
+    Example
+    -------
+
+    .. code-block:: python
+
+        from optimeo.doe import DesignOfExperiments
+
+        parameters = [
+            {'name': 'Temperature', 'type': 'integer', 'values': [20, 30, 40]},
+            {'name': 'Pressure', 'type': 'float', 'values': [1, 2, 3]},
+            {'name': 'Catalyst', 'type': 'categorical', 'values': ['A', 'B', 'C']}
+        ]
+
+        doe = DesignOfExperiments(
+            type='Full Factorial',
+            parameters=parameters,
+        )
+        design = doe.design
+        print(design)
+
     Parameters
     ----------
     
@@ -99,33 +118,10 @@ class DesignOfExperiments:
     
     Methods
     -------
-    - **create_design()**:
+    create_design()
         Create the design of experiments based on the specified type and parameters.
-    - **plot()**:
+    plot()
         Plot the design of experiments using plotly.
-    
-    
-    Example
-    -------
-    
-    ```python
-    from doe import DesignOfExperiments
-    parameters = [
-        {'name': 'Temperature', 'type': 'integer', 'values': [20, 30, 40]},
-        {'name': 'Pressure', 'type': 'float', 'values': [1, 2, 3]},
-        {'name': 'Catalyst', 'type': 'categorical', 'values': ['A', 'B', 'C']}
-    ]
-    doe = DesignOfExperiments(
-        type='Full Factorial',
-        parameters=parameters
-    )
-    design = doe.design
-    print(design)
-    figs = doe.plot()
-    for fig in figs:
-        fig.show()
-    ```
-    
 
     """
 

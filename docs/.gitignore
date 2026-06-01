@@ -1,0 +1,6 @@
+_build/
+source/CHANGELOG.md
+source/LICENSE
+source/_static/logo.png
+source/examples/notebooks/*
+!source/examples/notebooks/.gitkeep

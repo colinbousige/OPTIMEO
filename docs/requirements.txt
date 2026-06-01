@@ -1,0 +1,6 @@
+sphinx>=8.0
+pydata-sphinx-theme>=0.16
+myst-parser>=3.0
+nbsphinx>=0.9
+sphinx-copybutton>=0.5
+ipykernel>=6.0

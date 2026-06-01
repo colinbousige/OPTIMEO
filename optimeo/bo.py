@@ -50,6 +50,24 @@ class BOExperiment:
     """
     BOExperiment is a class designed to facilitate Bayesian Optimization experiments using the [Ax platform](https://ax.dev/).
     It encapsulates the experiment setup, including features, outcomes, constraints, and optimization methods.
+
+    Example
+    -------
+
+    .. code-block:: python
+
+        from optimeo.bo import BOExperiment, read_experimental_data
+
+        features, outcomes = read_experimental_data('data.csv', out_pos=[-2, -1])
+        experiment = BOExperiment(
+            features,
+            outcomes,
+            N=5,
+            maximize={'out1': True, 'out2': False},
+        )
+        experiment.suggest_next_trials()
+        experiment.plot_model(metricname='outcome1')
+        experiment.plot_optimization_trace()
     
     Parameters
     ----------
@@ -135,71 +153,25 @@ class BOExperiment:
 
     Methods
     -------
-    
-    - <b>initialize_ax_client()</b>:
-        Initializes the AxClient with the experiment's parameters, objectives, and constraints.
-    - <b>suggest_next_trials()</b>:
-        Suggests the next set of trials based on the current model and optimization strategy.
-        Returns a DataFrame containing the suggested trials and their predicted outcomes.
-    - <b>predict(params: List[Dict[str, Any]]) -> List[Dict[str, float]]</b>:
-        Predicts the outcomes for a given set of parameters using the current model.
-        Returns a list of predicted outcomes for the given parameters.
-    - <b>update_experiment(params: Dict[str, Any], outcomes: Dict[str, Any])</b>:
-        Updates the experiment with new parameters and outcomes, and reinitializes the AxClient.
-    - <b>plot_model(metricname: Optional[str] = None, slice_values: Optional[Dict[str, Any]]  None, linear: bool = False)`</b>:
-        Plots the model's predictions for the experiment's parameters and outcomes.
-        If metricname is None, the first outcome metric is used.
-        If slice_values is provided, it slices the plot at those values.
-        If linear is True, it plots a linear slice plot.
-        If the experiment has only one feature, it plots a slice plot.
-        If the experiment has multiple features, it plots a contour plot.
-        Returns a Plotly figure of the model's predictions.
-    - <b>plot_optimization_trace(optimum: Optional[float] = None)</b>:
-        Plots the optimization trace, showing the progress of the optimization over trials.
-        If the experiment has multiple outcomes, it raises a warning and returns None.
-        Returns a Plotly figure of the optimization trace.
-    - <b>plot_pareto_frontier()</b>:
-        Plots the Pareto frontier for multi-objective optimization experiments.
-        If the experiment has only one outcome, it raises a warning and returns None.
-        Returns a Plotly figure of the Pareto frontier.
-    - <b>get_best_parameters() -> pd.DataFrame</b>:
-        Returns the best parameters found by the optimization process.
-        If the experiment has multiple outcomes, it returns a DataFrame of the Pareto optimal parameters.
-        If the experiment has only one outcome, it returns a DataFrame of the best parameters and their outcomes.
-        The DataFrame contains the best parameters and their corresponding outcomes.
-    - <b>clear_trials()</b>:
-        Clears all trials in the experiment.
-        This is useful for resetting the experiment before suggesting new trials.
-    - <b>set_model()</b>:
-        Sets the model to be used for predictions.
-        This method is called after initializing the AxClient.
-    - <b>set_gs()</b>:
-        Sets the generation strategy for the experiment.
-        This method is called after initializing the AxClient.
+    initialize_ax_client()
+        Initialize AxClient with experiment parameters, objectives, and constraints.
+    suggest_next_trials()
+        Suggest next trial(s) from the current model and generation strategy.
+    predict(params)
+        Predict outcomes for a list of parameter dictionaries.
+    update_experiment(params, outcomes)
+        Update the experiment with new observations and refresh internal state.
+    plot_model(metricname=None, slice_values=None, linear=False)
+        Plot model predictions as slices or contours.
+    plot_optimization_trace(optimum=None)
+        Plot optimization progress over trials.
+    plot_pareto_frontier()
+        Plot Pareto frontier for multi-objective problems.
+    get_best_parameters()
+        Return best parameter set(s) and associated outcomes.
+    clear_trials()
+        Remove all current trials.
 
-
-    Example
-    -------
-    ```python
-    features, outcomes = read_experimental_data('data.csv', out_pos=[-2, -1])
-    experiment = BOExperiment(features, 
-                              outcomes, 
-                              N=5, 
-                              maximize={'out1':True, 'out2':False}
-                              )
-    experiment.suggest_next_trials()
-    experiment.plot_model(metricname='outcome1')
-    experiment.plot_model(metricname='outcome2', linear=True)
-    experiment.plot_model(metricname='outcome1', slice_values={'feature1': 5})
-    experiment.plot_optimization_trace()
-    experiment.plot_pareto_frontier()
-    experiment.get_best_parameters()
-    experiment.update_experiment({'feature1': [4]}, {'outcome1': [0.4]})
-    experiment.plot_model()
-    experiment.plot_optimization_trace()
-    experiment.plot_pareto_frontier()
-    experiment.get_best_parameters()
-    ```
     """
 
     def __init__(self,
@@ -270,19 +242,13 @@ class BOExperiment:
         
         Example
         -------
-        ```python
-        features = {
-            'feature1': {'type': 'int', 
-                         'data': [1, 2, 3], 
-                         'range': [1, 3]},
-            'feature2': {'type': 'float', 
-                         'data': [0.1, 0.2, 0.3], 
-                         'range': [0.1, 0.3]},
-            'feature3': {'type': 'text', 
-                         'data': ['A', 'B', 'C'], 
-                         'range': ['A', 'B', 'C']}
+        .. code-block:: python
+
+            features = {
+                'feature1': {'type': 'int', 'data': [1, 2, 3], 'range': [1, 3]},
+                'feature2': {'type': 'float', 'data': [0.1, 0.2, 0.3], 'range': [0.1, 0.3]},
+                'feature3': {'type': 'text', 'data': ['A', 'B', 'C'], 'range': ['A', 'B', 'C']},
             }
-        ```
         """
         return self._features
 
@@ -352,14 +318,12 @@ class BOExperiment:
         
         Example
         -------
-        ```python
-        outcomes = {
-            'outcome1': {'type': 'float', 
-                         'data': [0.1, 0.2, 0.3]},
-            'outcome2': {'type': 'float', 
-                         'data': [1.0, 2.0, 3.0]}
+        .. code-block:: python
+
+            outcomes = {
+                'outcome1': {'type': 'float', 'data': [0.1, 0.2, 0.3]},
+                'outcome2': {'type': 'float', 'data': [1.0, 2.0, 3.0]},
             }
-        ```
         """
         return self._outcomes
 
@@ -423,8 +387,8 @@ class BOExperiment:
     @property
     def maximize(self):
         """
-        A boolean or dict indicating whether to maximize the outcomes in the form `{'outcome1':True, 'outcome2':False}`.
-        If a single boolean is provided, it is applied to all outcomes. Default is `True`.
+        A boolean or dict indicating whether to maximize outcomes in the form ``{'outcome1': True, 'outcome2': False}``.
+        If a single boolean is provided, it is applied to all outcomes. Default is ``True``.
         """
         return self._maximize
 
@@ -471,12 +435,12 @@ class BOExperiment:
         
         Example
         -------
-        ```python
-        feature_constraints = [
-            'feature1 <= 10.0',
-            'feature1 + 2*feature2 >= 3.0'
-        ]
-        ```
+        .. code-block:: python
+
+            feature_constraints = [
+                'feature1 <= 10.0',
+                'feature1 + 2*feature2 >= 3.0',
+            ]
         """
         return self._feature_constraints
 
@@ -571,12 +535,12 @@ class BOExperiment:
         
         Example
         -------
-        ```python
-        acq_func = {
-            'acqf': UpperConfidenceBound,
-            'acqf_kwargs': {'beta': 0.1} # lower value = exploitation, higher value = exploration
-        }
-        ```
+        .. code-block:: python
+
+            acq_func = {
+                'acqf': UpperConfidenceBound,
+                'acqf_kwargs': {'beta': 0.1},  # lower = exploitation, higher = exploration
+            }
         """
         return self._acq_func
     

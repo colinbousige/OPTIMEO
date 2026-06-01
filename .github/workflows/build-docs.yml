@@ -16,45 +16,93 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Needed for git history access
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'  # Use your preferred Python version
+          python-version: '3.11'
 
       - name: Install the project
         run: pip install .
 
-      - name: Install pdoc
-        run: pip install pdoc
+      - name: Install documentation dependencies
+        run: pip install -r docs/requirements.txt
 
       - name: Generate documentation
         run: |
+          cp CHANGELOG.md docs/source/CHANGELOG.md
+          cp LICENSE docs/source/LICENSE
+          mkdir -p docs/source/examples/notebooks
+          cp notebooks/doe.ipynb docs/source/examples/notebooks/doe.ipynb
+          cp notebooks/bo.ipynb docs/source/examples/notebooks/bo.ipynb
+          cp notebooks/MLanalysis.ipynb docs/source/examples/notebooks/MLanalysis.ipynb
+          cp notebooks/*.csv docs/source/examples/notebooks/
+          cp optimeo/app/resources/logo.png docs/source/_static/logo.png
           python - << 'PY'
+          import json
           from pathlib import Path
-          import re
 
-          init_path = Path('optimeo/__init__.py')
-          readme = Path('README.md').read_text(encoding='utf-8')
-          init_src = init_path.read_text(encoding='utf-8')
+          marker = "# docs-warning-suppress"
+          suppress_source = [
+              marker + "\n",
+              "import logging\n",
+              "import warnings\n",
+              "warnings.filterwarnings('ignore', category=DeprecationWarning, module=r'torch\\.jit\\._script')\n",
+              "warnings.filterwarnings('ignore', category=DeprecationWarning, module=r'matplotlib\\._fontconfig_pattern')\n",
+              "try:\n",
+              "    from ax.exceptions.core import AxParameterWarning\n",
+              "    warnings.filterwarnings('ignore', category=AxParameterWarning)\n",
+              "except Exception:\n",
+              "    pass\n",
+              "try:\n",
+              "    from pyparsing import PyparsingDeprecationWarning\n",
+              "    warnings.filterwarnings('ignore', category=PyparsingDeprecationWarning)\n",
+              "except Exception:\n",
+              "    pass\n",
+              "logging.getLogger('ax').setLevel(logging.WARNING)\n",
+              "logging.getLogger('ax.service.utils.instantiation').setLevel(logging.ERROR)\n",
+              "logging.getLogger('ax.generation_strategy.dispatch_utils').setLevel(logging.WARNING)\n",
+          ]
 
-          # Inject README as top-level package docstring for pdoc rendering.
-          readme_docstring = '"""' + readme.replace('"""', '\\"\\"\\"') + '"""'
-          updated = re.sub(r'\A\s*"""(?:.*?)"""', readme_docstring, init_src, count=1, flags=re.S)
-          init_path.write_text(updated, encoding='utf-8')
+          nb_dir = Path("docs/source/examples/notebooks")
+          for nb_path in nb_dir.glob("*.ipynb"):
+              data = json.loads(nb_path.read_text(encoding="utf-8"))
+              cells = data.get("cells", [])
+
+              for cell in cells:
+                if cell.get("cell_type") != "code":
+                  continue
+                source_lines = cell.get("source", [])
+                normalized = []
+                for line in source_lines:
+                  line = line.replace('pio.renderers.default = "colab"', 'pio.renderers.default = "notebook_connected"')
+                  line = line.replace("pio.renderers.default = 'colab'", "pio.renderers.default = 'notebook_connected'")
+                  normalized.append(line)
+                cell["source"] = normalized
+
+              if cells and cells[0].get("cell_type") == "code":
+                  first_source = "".join(cells[0].get("source", []))
+                  if marker in first_source:
+                      continue
+              cells.insert(
+                  0,
+                  {
+                      "cell_type": "code",
+                      "execution_count": None,
+                      "metadata": {},
+                      "outputs": [],
+                      "source": suppress_source,
+                  },
+              )
+              data["cells"] = cells
+              nb_path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
           PY
-
-          pdoc optimeo optimeo.analysis optimeo.bo optimeo.doe --logo logo.png --docformat numpy -o ./docs
-          cp optimeo/app/resources/logo.png ./docs/
-          cp optimeo/app/resources/logo.png ./docs/optimeo/
-          cp ./docs/optimeo.html ./docs/index.html
+          PYTHONWARNINGS="ignore::DeprecationWarning" sphinx-build -b html docs/source docs/_build/html
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./docs  # Use the correct path where your docs are generated
+          path: docs/_build/html
 
   deploy:
     needs: build-docs

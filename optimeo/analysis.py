@@ -46,6 +46,21 @@ class DataAnalysis:
     """
     This class is used to analyze the data and perform regression analysis.
 
+    Example
+    -------
+
+    .. code-block:: python
+
+        import pandas as pd
+        from optimeo.analysis import DataAnalysis
+
+        data = pd.read_csv('dataML.csv')
+        factors = data.columns[:-1].tolist()
+        response = data.columns[-1]
+        analysis = DataAnalysis(data, factors, response)
+        analysis.model_type = "ElasticNetCV"
+        analysis.compute_ML_model()
+
     Parameters
     ----------
 
@@ -88,50 +103,33 @@ class DataAnalysis:
 
     Methods
     -------
-    
-    - **encode_data()**:
-        Encodes categorical variables in the data. Called during initialization.
-    - **plot_qq()**:
-        Plots a Q-Q plot for the response variable using `plotly`.
-    - **plot_boxplot()**:
-        Plots a boxplot for the response variable using `plotly`.
-    - **plot_histogram()**:
-        Plots a histogram for the response variable using `plotly`.
-    - **plot_scatter_response()**:
-        Plots a scatter plot for the response variable using `plotly`.
-    - **plot_corr()**:
-        Plots a correlation matrix for the data using `plotly`.
-    - **plot_pairplot_seaborn()**:
-        Plots a pairplot for the data using `seaborn`.
-    - **plot_pairplot_plotly()**:
-        Plots a pairplot for the data using `plotly`.
-    - **write_equation(order=1, quadratic=[])**:
-        Writes R-style equation for multivariate fitting procedure using the `statsmodels` package.
-    - **compute_linear_model(order=1, quadratic=[])**:
-        Computes the linear model using the `statsmodels` package.
-    - **plot_linear_model()**:
-        Plots the linear model using `plotly`.
-    - <b>compute_ML_model(**kwargs)</b>:
-        Computes the machine learning model using `sklearn`.
-    - **plot_ML_model(features_in_log=False)**:
-        Plots the machine learning model using `plotly`.
-    
-    Example
-    -------
-    
-    ```python
-    from optimeo.analysis import * 
+    encode_data()
+        Encode categorical variables in input data.
+    plot_qq()
+        Plot a Q-Q plot of residuals.
+    plot_boxplot()
+        Plot response distribution as boxplot.
+    plot_histogram()
+        Plot response distribution as histogram.
+    plot_scatter_response()
+        Plot scatter response against factors.
+    plot_corr()
+        Plot factor correlation matrix.
+    plot_pairplot_seaborn()
+        Generate pairplot with seaborn.
+    plot_pairplot_plotly()
+        Generate pairplot with plotly.
+    write_equation(order=1, quadratic=[])
+        Build formula string for statsmodels.
+    compute_linear_model(order=1, quadratic=[])
+        Fit linear model with statsmodels.
+    plot_linear_model()
+        Visualize linear model effects.
+    compute_ML_model(**kwargs)
+        Fit machine-learning model.
+    plot_ML_model(features_in_log=False)
+        Plot ML model response surfaces.
 
-    data = pd.read_csv('dataML.csv')
-    factors = data.columns[:-1].tolist()
-    response = data.columns[-1]
-    analysis = DataAnalysis(data, factors, response)
-    analysis.model_type = "ElasticNetCV"
-    MLmodel = analysis.compute_ML_model()
-    figs = analysis.plot_ML_model()
-    for fig in figs:
-        fig.show()
-    ```
     """
 
     def __init__(self, 
@@ -231,7 +229,11 @@ class DataAnalysis:
 
     @property
     def equation(self):
-        """The equation for the linear model, in the form `response ~ var1 + var2 + var1:var2`. This is based on the [statsmodels package](https://www.statsmodels.org/dev/examples/notebooks/generated/formulas.html)."""
+        """The equation for the linear model, in the form ``response ~ var1 + var2 + var1:var2``.
+
+        See statsmodels formula examples:
+        https://www.statsmodels.org/dev/examples/notebooks/generated/formulas.html
+        """
         return self._equation
 
     @equation.setter
@@ -954,24 +956,24 @@ class DataAnalysis:
         kwargs : dict
             Additional keyword arguments for the model. Overrides default parameters.
             
-        Default Parameters by Model Type
+        Default parameters by model type
         --------------------------------
-        - **ElasticNetCV:**
+        - ElasticNetCV:
             - l1_ratio : list, default=[0.1, 0.5, 0.7, 0.9, 0.95, 0.99, 1.0].
                 List of L1 ratios to try.
             - cv : int, default=5.
                 Cross-validation folds.
             - max_iter : int, default=1000.
                 Maximum iterations.
-        - **RidgeCV:**
+        - RidgeCV:
             - alphas : list, default=[0.1, 1.0, 10.0].
                 List of alpha values to try.
             - cv : int, default=5.
                 Cross-validation folds.
-        - **LinearRegression:**
+        - LinearRegression:
             - fit_intercept : bool, default=True.
                 Whether to calculate the intercept.
-        - **RandomForest:**
+        - RandomForest:
             - n_estimators : int, default=100.
                 Number of trees in the forest.
             - max_depth : int or None, default=None.
@@ -980,7 +982,7 @@ class DataAnalysis:
                 Minimum samples required to split a node.
             - random_state : int, default=42.
                 Random seed for reproducibility.
-        - **GaussianProcess:**
+        - GaussianProcess:
             - kernel : kernel object, default=None.
                 Kernel for the Gaussian Process.
             - alpha : float, default=1e-10.
@@ -989,7 +991,7 @@ class DataAnalysis:
                 Normalize target values.
             - random_state : int, default=42.
                 Random seed for reproducibility.
-        - **GradientBoosting:**
+        - GradientBoosting:
             - n_estimators : int, default=100.
                 Number of boosting stages.
             - learning_rate : float, default=0.1.

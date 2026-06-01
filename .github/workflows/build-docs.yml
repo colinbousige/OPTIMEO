@@ -45,6 +45,24 @@ jobs:
           </head>
           <body>
             <h1>OPTIMEO Documentation</h1>
+            <p>
+              OPTIMEO is a toolkit for process tuning with Design of Experiments,
+              Bayesian Optimization, and data analysis/modeling.
+            </p>
+
+            <h2>Installation</h2>
+            <pre><code>uv venv .venv --python 3.10
+            source .venv/bin/activate
+            uv pip install optimeo
+            optimeo</code></pre>
+
+            <h2>Usage</h2>
+            <p>
+              Start the local app with <code>optimeo</code>, or open
+              <a href="https://optimeo.streamlit.app/">optimeo.streamlit.app</a>.
+            </p>
+
+            <h2>API Documentation</h2>
             <ul>
               <li><a href="optimeo.html">Package Overview</a></li>
               <li><a href="optimeo/analysis.html">Analysis API</a></li>

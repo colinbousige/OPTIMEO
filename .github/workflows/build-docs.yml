@@ -32,49 +32,24 @@ jobs:
 
       - name: Generate documentation
         run: |
+          python - << 'PY'
+          from pathlib import Path
+          import re
+
+          init_path = Path('optimeo/__init__.py')
+          readme = Path('README.md').read_text(encoding='utf-8')
+          init_src = init_path.read_text(encoding='utf-8')
+
+          # Inject README as top-level package docstring for pdoc rendering.
+          readme_docstring = '"""' + readme.replace('"""', '\\"\\"\\"') + '"""'
+          updated = re.sub(r'\A\s*"""(?:.*?)"""', readme_docstring, init_src, count=1, flags=re.S)
+          init_path.write_text(updated, encoding='utf-8')
+          PY
+
           pdoc optimeo optimeo.analysis optimeo.bo optimeo.doe --logo logo.png --docformat numpy -o ./docs
           cp optimeo/app/resources/logo.png ./docs/
           cp optimeo/app/resources/logo.png ./docs/optimeo/
-          cat > ./docs/index.html << 'EOF'
-          <!doctype html>
-          <html lang="en">
-          <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <title>OPTIMEO Documentation</title>
-          </head>
-          <body>
-            <h1>OPTIMEO Documentation</h1>
-            <p>
-              OPTIMEO is a toolkit for process tuning with Design of Experiments,
-              Bayesian Optimization, and data analysis/modeling.
-            </p>
-
-            <h2>Installation</h2>
-            <pre><code>uv venv .venv --python 3.10
-            source .venv/bin/activate
-            uv pip install optimeo
-            optimeo</code></pre>
-
-            <h2>Usage</h2>
-            <p>
-              Start the local app with <code>optimeo</code>, or open
-              <a href="https://optimeo.streamlit.app/">optimeo.streamlit.app</a>.
-            </p>
-
-            <h2>API Documentation</h2>
-            <ul>
-              <li><a href="optimeo.html">Package Overview</a></li>
-              <li><a href="optimeo/analysis.html">Analysis API</a></li>
-              <li><a href="optimeo/bo.html">Bayesian Optimization API</a></li>
-              <li><a href="optimeo/doe.html">Design of Experiments API</a></li>
-              <li><a href="examples/MLanalysis.html">Examples: ML Analysis</a></li>
-              <li><a href="examples/bo.html">Examples: Bayesian Optimization</a></li>
-              <li><a href="examples/doe.html">Examples: Design of Experiments</a></li>
-            </ul>
-          </body>
-          </html>
-          EOF
+          cp ./docs/optimeo.html ./docs/index.html
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3

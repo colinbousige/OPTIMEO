@@ -2,6 +2,23 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.3.1] - 2026-06-01
+
+### Added
+- Added `objective_thresholds` support to `BOExperiment`, passed through to Ax `ObjectiveProperties` for multi-objective reference-point configuration.
+
+### Changed
+- Updated notebook preprocessing in docs build to enforce responsive Plotly rendering in published example pages.
+- Updated app/resource path handling to use package-relative resolution across Streamlit pages for cloud-safe file loading.
+
+### Fixed
+- Fixed Streamlit Cloud `FileNotFoundError` issues caused by cwd-relative resource paths (`style.css`, icons, logo, figures).
+- Suppressed recurring matplotlib/pyparsing deprecation warnings in docs notebook execution.
+- Added backward-compatible docs publishing behavior and notebook rendering improvements in the docs pipeline.
+
+### Internal
+- Bumped package/version metadata and user-facing release references to `1.3.1`.
+
 ## [1.3.0] - 2026-06-01
 
 ### Added

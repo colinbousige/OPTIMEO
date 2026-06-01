@@ -13,3 +13,15 @@
 .bd-sidebar-primary {
   border-right: 1px solid var(--pst-color-border);
 }
+
+.bd-article .output_area,
+.bd-article .output_subarea {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.bd-article .js-plotly-plot,
+.bd-article .plotly-graph-div {
+  width: 100% !important;
+  max-width: 100% !important;
+}

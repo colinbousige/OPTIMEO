@@ -27,7 +27,7 @@ It is generated automatically by the GitHub Actions workflow on pushes to `main`
 ## Changelog
 
 Release notes are available in [CHANGELOG.md](CHANGELOG.md).  
-Current release: **v1.3.0**.
+Current release: **v1.3.1**.
 
 ## Installation
 

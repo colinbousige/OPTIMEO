@@ -15,7 +15,7 @@ authors:
       Universite Claude Bernard Lyon 1, CNRS, LMI UMR 5615,
       Villeurbanne, F-69100, France
 repository-code: 'https://github.com/colinbousige/OPTIMEO'
-url: 'https://colinbousige.github.io/OPTIMEO/optimeo.html'
+url: 'https://colinbousige.github.io/OPTIMEO/'
 doi: '10.5281/zenodo.15308437'
 abstract: >-
   OPTIMEO is a package doubled by a web application that
@@ -28,5 +28,5 @@ keywords:
   - design of experiment
   - active learning
 license: CC-BY-NC-4.0
-version: '1.3.0'
+version: '1.3.1'
 date-released: '2026-06-01'

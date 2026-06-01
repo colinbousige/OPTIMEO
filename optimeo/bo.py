@@ -99,6 +99,10 @@ class BOExperiment:
     outcome_constraints: Optional[List[str]]
         Constraints on the outcomes, specified as a list of strings. Default is `None`.
         The constraints should be in the format `{'outcome_name': [minvalue,maxvalue]}`.
+    objective_thresholds: Optional[Dict[str, float]]
+        Reference-point thresholds for multi-objective optimization, specified per outcome
+        in the format ``{'outcome_name': threshold}``. Default is `None`.
+        Setting these avoids Ax's default winsorization warning for multi-objective runs.
     feature_constraints: Optional[List[str]]
         Constraints on the features, specified as a list of strings. Default is `None`.
         The constraints should be in the format `{'feature_name': [minvalue,maxvalue]}`.
@@ -182,6 +186,7 @@ class BOExperiment:
                  maximize: Union[bool, Dict[str, bool]] = True,
                  fixed_features: Optional[Dict[str, Any]] = None,
                  outcome_constraints: Optional[List[str]] = None,
+                 objective_thresholds: Optional[Dict[str, float]] = None,
                  feature_constraints: Optional[List[str]] = None,
                  optim='bo',
                  acq_func=None,
@@ -195,6 +200,7 @@ class BOExperiment:
         self.N                   = N
         self.maximize            = maximize
         self.outcome_constraints = outcome_constraints
+        self.objective_thresholds = objective_thresholds
         self.feature_constraints = feature_constraints
         self.optim               = optim
         self.acq_func            = acq_func
@@ -429,6 +435,36 @@ class BOExperiment:
             self.initialize_ax_client()
 
     @property
+    def objective_thresholds(self):
+        """
+        Reference-point thresholds for multi-objective optimization.
+
+        Format: ``{'outcome_name': threshold}``.
+        """
+        return self._objective_thresholds
+
+    @objective_thresholds.setter
+    def objective_thresholds(self, value):
+        """
+        Set objective thresholds with validation.
+        """
+        if value is None:
+            self._objective_thresholds = None
+        elif isinstance(value, dict):
+            validated = {}
+            for name, threshold in value.items():
+                if name not in self.out_names:
+                    raise ValueError(f"Objective threshold provided for unknown outcome '{name}'")
+                if not isinstance(threshold, (int, float)):
+                    raise ValueError(f"Objective threshold for '{name}' must be a number")
+                validated[name] = float(threshold)
+            self._objective_thresholds = validated
+        else:
+            raise ValueError("objective_thresholds must be a dictionary or None")
+        if self._first_initialization_done:
+            self.initialize_ax_client()
+
+    @property
     def feature_constraints(self):
         """
         Constraints on the features, specified as a list of strings. Default is `None`.
@@ -606,13 +642,19 @@ Input data:
                     "bounds": [float(np.min(info['range'])),
                                float(np.max(info['range']))],
                     "value_type": "float"})
+
+        objectives = {}
+        for k, v in self._maximize.items():
+            if isinstance(v, bool) and k in self._outcomes.keys():
+                threshold = None
+                if self._objective_thresholds is not None:
+                    threshold = self._objective_thresholds.get(k)
+                objectives[k] = ObjectiveProperties(minimize=not v, threshold=threshold)
         
         self.ax_client.create_experiment(
             name="bayesian_optimization",
             parameters=self.parameters,
-            objectives={k: ObjectiveProperties(minimize=not v) 
-                        for k,v in self._maximize.items() 
-                        if isinstance(v, bool) and k in self._outcomes.keys()},
+            objectives=objectives,
             parameter_constraints=self._feature_constraints,
             outcome_constraints=self._outcome_constraints,
             overwrite_existing_experiment=True

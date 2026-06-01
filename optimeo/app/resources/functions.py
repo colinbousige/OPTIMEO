@@ -35,7 +35,7 @@ about_items={
         'Report a bug': "mailto:colin.bousige@cnrs.fr",
         'About': """
         ## OPTIMA
-        Version date 2025-04-14.
+    Version 1.3.1 (2026-06-01).
 
         This app was made by [Colin Bousige](https://lmi.cnrs.fr/author/colin-bousige/). Contact me for support, requests, or to signal a bug.
         """

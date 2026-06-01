@@ -54,6 +54,9 @@ jobs:
               "import warnings\n",
               "warnings.filterwarnings('ignore', category=DeprecationWarning, module=r'torch\\.jit\\._script')\n",
               "warnings.filterwarnings('ignore', category=DeprecationWarning, module=r'matplotlib\\._fontconfig_pattern')\n",
+              "warnings.filterwarnings('ignore', message=r\".*oneOf.*deprecated.*one_of.*\", module=r'matplotlib\\._fontconfig_pattern')\n",
+              "warnings.filterwarnings('ignore', message=r\".*parseString.*deprecated.*parse_string.*\", module=r'matplotlib\\._fontconfig_pattern')\n",
+              "warnings.filterwarnings('ignore', message=r\".*resetCache.*deprecated.*reset_cache.*\", module=r'matplotlib\\._fontconfig_pattern')\n",
               "try:\n",
               "    from ax.exceptions.core import AxParameterWarning\n",
               "    warnings.filterwarnings('ignore', category=AxParameterWarning)\n",
@@ -67,6 +70,18 @@ jobs:
               "logging.getLogger('ax').setLevel(logging.WARNING)\n",
               "logging.getLogger('ax.service.utils.instantiation').setLevel(logging.ERROR)\n",
               "logging.getLogger('ax.generation_strategy.dispatch_utils').setLevel(logging.WARNING)\n",
+                "try:\n",
+                "    import plotly.graph_objects as go\n",
+                "    _orig_show = go.Figure.show\n",
+                "    def _responsive_show(fig, *args, **kwargs):\n",
+                "        fig.update_layout(autosize=True)\n",
+                "        config = kwargs.get('config') or {}\n",
+                "        config.setdefault('responsive', True)\n",
+                "        kwargs['config'] = config\n",
+                "        return _orig_show(fig, *args, **kwargs)\n",
+                "    go.Figure.show = _responsive_show\n",
+                "except Exception:\n",
+                "    pass\n",
           ]
 
           nb_dir = Path("docs/source/examples/notebooks")
@@ -79,10 +94,18 @@ jobs:
                   continue
                 source_lines = cell.get("source", [])
                 normalized = []
+                has_pio_import = False
                 for line in source_lines:
                   line = line.replace('pio.renderers.default = "colab"', 'pio.renderers.default = "notebook_connected"')
                   line = line.replace("pio.renderers.default = 'colab'", "pio.renderers.default = 'notebook_connected'")
+                  line = line.replace("fig.show()", "fig.show(config={'responsive': True})")
+                  line = line.replace('fig.show(renderer="colab")', "fig.show(config={'responsive': True})")
+                  line = line.replace("fig.show(renderer='colab')", "fig.show(config={'responsive': True})")
+                  if "import plotly.io as pio" in line:
+                    has_pio_import = True
                   normalized.append(line)
+                if has_pio_import and not any("pio.renderers['notebook_connected'].config" in ln or 'pio.renderers["notebook_connected"].config' in ln for ln in normalized):
+                  normalized.append("\npio.renderers['notebook_connected'].config = {'responsive': True}\n")
                 cell["source"] = normalized
 
               if cells and cells[0].get("cell_type") == "code":

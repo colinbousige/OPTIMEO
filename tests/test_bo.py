@@ -64,3 +64,30 @@ def test_three_objectives():
     assert fig is not None
 
 
+def test_initialization_without_observations_uses_bootstrap_strategy():
+    """BO should initialize and suggest candidates even before any outcomes exist."""
+    empty_features = {
+        name: {**info, "data": []}
+        for name, info in features.items()
+    }
+    empty_outcomes = {
+        name: {**info, "data": []}
+        for name, info in outcomes.items()
+    }
+
+    experiment = BOExperiment(
+        empty_features,
+        empty_outcomes,
+        N=2,
+        maximize={"Yield": True, "Price": False},
+    )
+
+    assert experiment.model is None
+    next_trial = experiment.suggest_next_trials(with_predicted=False)
+    assert isinstance(next_trial, pd.DataFrame)
+    assert len(next_trial) == 2
+
+    with pytest.raises(ValueError, match="Predictions require at least one completed experiment"):
+        experiment.predict(next_trial.to_dict(orient="records"))
+
+

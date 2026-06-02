@@ -2,6 +2,23 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.3.2] - 2026-06-02
+
+### Added
+- Added editable categorical allow-lists in the Bayesian Optimization data-loading UI so accepted categories can be widened or narrowed intentionally.
+
+### Changed
+- Candidate tables now preserve categorical values as text instead of showing Ax one-hot internal names or encoded numbers.
+- Sensitivity analysis labels now map one-hot categorical features back to human-readable category values.
+- The BO page now skips prediction rendering when no fitted model is available and shows an explicit bootstrap message instead.
+
+### Fixed
+- Prevented `DataRequiredError` and `No feasible points are in the search space` failures from crashing the BO workflow when the current session cannot fit a model.
+- Added no-model fallbacks for candidate suggestions, best-parameter display, and model plots.
+
+### Internal
+- Bumped package/version metadata and user-facing release references to `1.3.2`.
+
 ## [1.3.1] - 2026-06-01
 
 ### Added

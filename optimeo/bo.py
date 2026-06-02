@@ -29,6 +29,7 @@ from typing import Any, Dict, List, Optional, Union, Tuple
 from ax.adapter.registry import Generators
 from ax.core.observation import ObservationFeatures
 from ax.core.trial_status import TrialStatus
+from ax.exceptions.core import DataRequiredError
 from ax.generation_strategy.generation_node import GenerationStep
 from ax.generation_strategy.generation_strategy import GenerationStrategy
 from ax.analysis.plotly.sensitivity import SensitivityAnalysisPlot
@@ -270,8 +271,11 @@ class BOExperiment:
             if self.ranges and name in self.ranges.keys():
                 self._features[name]['range'] = self.ranges[name]
             else:
-                if self._features[name]['type'] == 'text':
-                    self._features[name]['range'] = list(set(self._features[name]['data']))
+                feature_data = self._features[name].get('data', [])
+                if len(feature_data) == 0:
+                    self._features[name]['range'] = self._features[name].get('range', [])
+                elif self._features[name]['type'] == 'text':
+                    self._features[name]['range'] = list(set(feature_data))
                 elif self._features[name]['type'] == 'int':
                     self._features[name]['range'] = [int(np.min(self._features[name]['data'])),
                                                      int(np.max(self._features[name]['data']))]
@@ -670,15 +674,32 @@ Input data:
         self.set_model()
         self.set_gs()
 
+    def _has_completed_data(self) -> bool:
+        """Return whether the current Ax experiment has usable completed data."""
+        if self.ax_client is None or self.ax_client.experiment is None:
+            return False
+        data = self.ax_client.experiment.fetch_data()
+        if data is None:
+            return False
+        df = getattr(data, "df", None)
+        return df is not None and not df.empty
+
     def set_model(self):
         """
         Set the model to be used for predictions.
         This method is called after initializing the AxClient.
         """
-        self.model = Generators.BOTORCH_MODULAR(
-                experiment=self.ax_client.experiment,
-                data=self.ax_client.experiment.fetch_data()
-                )
+        if not self._has_completed_data():
+            self.model = None
+            return
+
+        try:
+            self.model = Generators.BOTORCH_MODULAR(
+                    experiment=self.ax_client.experiment,
+                    data=self.ax_client.experiment.fetch_data()
+                    )
+        except DataRequiredError:
+            self.model = None
     
     def set_gs(self):
         """
@@ -689,7 +710,18 @@ Input data:
         if self._optim == 'bo':
             if not self.model:
                 self.set_model()
-            if self.acq_func is None:
+            if self.model is None:
+                self.gs = GenerationStrategy(
+                    steps=[GenerationStep(
+                                generator=Generators.SOBOL,
+                                num_trials=-1,
+                                should_deduplicate=True,
+                                model_kwargs={"seed": self.seed},
+                                model_gen_kwargs={},
+                            )
+                        ]
+                    )
+            elif self.acq_func is None:
                 self.gs = GenerationStrategy(
                     steps=[GenerationStep(
                                 generator=Generators.BOTORCH_MODULAR,
@@ -759,9 +791,14 @@ Input data:
             self.candidate = self.ax_client.experiment.new_trial(self.generator_run)
         else:
             self.candidate = self.ax_client.experiment.new_batch_trial(self.generator_run)
-        trials = self.ax_client.get_trials_data_frame()
-        trials = trials[trials['trial_status'] == 'CANDIDATE']
+        if hasattr(self.candidate, "arms"):
+            arm_parameters = [arm.parameters for arm in self.candidate.arms]
+        else:
+            arm_parameters = [self.candidate.arm.parameters]
+        trials = pd.DataFrame(arm_parameters)
         trials = trials[[name for name in self.names]]
+        if with_predicted and self.model is None:
+            return trials.reset_index(drop=True)
         if with_predicted:
             topred = [trials.iloc[i].to_dict() for i in range(len(trials))]
             preds = self.predict(topred)[0]
@@ -773,6 +810,27 @@ Input data:
             return pd.concat([trials, preds], axis=1)
         else:
             return trials
+
+    def _get_observed_best_parameters(self):
+        """Return best observed rows when no fitted Ax model is available yet."""
+        data = self.data.copy()
+        objective_names = [name for name, maximize in self._maximize.items() if isinstance(maximize, bool)]
+        if len(objective_names) == 0:
+            return pd.DataFrame()
+
+        data = data.dropna(subset=objective_names)
+        if data.empty:
+            return pd.DataFrame(columns=self.data.columns)
+
+        if len(objective_names) == 1:
+            objective_name = objective_names[0]
+            if self._maximize[objective_name]:
+                best_index = data[objective_name].idxmax()
+            else:
+                best_index = data[objective_name].idxmin()
+            return data.loc[[best_index]].reset_index(drop=True)
+
+        return data.reset_index(drop=True)
 
     def predict(self, params):
         """
@@ -792,6 +850,8 @@ Input data:
         """
         if self.ax_client is None:
             self.initialize_ax_client()
+        if self.model is None:
+            raise ValueError("Predictions require at least one completed experiment with numeric outcome data.")
         obs_feats = [ObservationFeatures(parameters=p) for p in params]
         f, cm = self.model.predict(obs_feats)
         # return prediction and std errors as a list of dictionaries
@@ -864,6 +924,40 @@ Input data:
         mname = self.ax_client.objective_names[0] if metricname is None else metricname
         param_name = [name for name in self.names if name not in slice_values.keys()]
         par_numeric = [name for name in param_name if self._features[name]['type'] in ['int', 'float']]
+
+        if self.model is None:
+            completed_trials = self.ax_client.get_trials_data_frame()
+            completed_trials = completed_trials[completed_trials['trial_status'] != 'CANDIDATE'].copy()
+            if mname not in completed_trials.columns:
+                return go.Figure()
+
+            if len(par_numeric) == 0:
+                return go.Figure()
+
+            if len(par_numeric) == 1:
+                fig = px.scatter(
+                    completed_trials,
+                    x=par_numeric[0],
+                    y=mname,
+                    title=f"Observed {mname} vs {par_numeric[0]}",
+                )
+            elif len(par_numeric) == 2:
+                fig = px.scatter(
+                    completed_trials,
+                    x=par_numeric[0],
+                    y=par_numeric[1],
+                    color=mname,
+                    color_continuous_scale="Viridis",
+                    title=f"Observed {par_numeric[1]} vs {par_numeric[0]}",
+                )
+            else:
+                fig = px.scatter_matrix(
+                    completed_trials,
+                    dimensions=par_numeric + [mname],
+                    title=f"Observed relationships for {mname}",
+                )
+
+            return fig
 
         if len(par_numeric) == 1:
             fig = plot_slice(
@@ -1097,6 +1191,26 @@ Input data:
             self.set_model()
 
         def _style_sensitivity_figure(fig):
+            def _humanize_sensitivity_label(label):
+                if not isinstance(label, str) or "_OH_PARAM_" not in label:
+                    return label
+
+                match = re.match(r"^(?P<feature>.+)_OH_PARAM_(?P<index>\d+)$", label)
+                if match is None:
+                    return label
+
+                feature_name = match.group("feature")
+                category_index = int(match.group("index"))
+                feature_info = self._features.get(feature_name)
+                if feature_info is None:
+                    return label
+
+                category_values = feature_info.get("range", [])
+                if not isinstance(category_values, list) or category_index >= len(category_values):
+                    return feature_name
+
+                return f"{feature_name}: {category_values[category_index]}"
+
             for trace in fig.data:
                 trace_name = str(getattr(trace, "name", "") or "")
                 if "Increases" in trace_name:
@@ -1109,6 +1223,10 @@ Input data:
                     trace.width = 0.85
                     trace.offsetgroup = None
                     trace.alignmentgroup = None
+
+                    y_values = getattr(trace, "y", None)
+                    if y_values is not None:
+                        trace.y = [_humanize_sensitivity_label(value) for value in y_values]
 
                 hovertemplate = getattr(trace, "hovertemplate", None)
                 if hovertemplate is not None:
@@ -1306,13 +1424,21 @@ Input data:
         """
         if self.ax_client is None:
             self.initialize_ax_client()
+        if self.model is None:
+            return self._get_observed_best_parameters()
         if self.Nmetrics == 1:
-            best_parameters = self.ax_client.get_best_parameters()[0]
-            best_outcomes = self.ax_client.get_best_parameters()[1]
+            best_result = self.ax_client.get_best_parameters()
+            if best_result is None or best_result[0] is None or best_result[1] is None:
+                return self._get_observed_best_parameters()
+
+            best_parameters = best_result[0]
+            best_outcomes = best_result[1]
             best_parameters.update(best_outcomes[0])
             best = pd.DataFrame(best_parameters, index=[0])
         else:
             best_parameters = self.ax_client.get_pareto_optimal_parameters()
+            if best_parameters is None:
+                return self._get_observed_best_parameters()
             best = ordered_dict_to_dataframe(best_parameters)
         return best
 

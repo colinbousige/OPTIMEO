@@ -35,7 +35,7 @@ about_items={
         'Report a bug': "mailto:colin.bousige@cnrs.fr",
         'About': """
         ## OPTIMA
-    Version 1.3.1 (2026-06-01).
+    Version 1.3.2 (2026-06-02).
 
         This app was made by [Colin Bousige](https://lmi.cnrs.fr/author/colin-bousige/). Contact me for support, requests, or to signal a bug.
         """
@@ -124,13 +124,20 @@ def encode_data(data, factors, response, factor_ranges):
     for column in features.columns:
         if features[column].dtype == 'object':
             unique_values = features[column].unique()
+            allowed_values = factor_ranges.get(column, unique_values.tolist())
+            if not isinstance(allowed_values, list):
+                allowed_values = unique_values.tolist()
             if len(unique_values) == 1:
                 message[column] = f"Only one unique value found in **{column}**. This column will be removed from the features."
+            elif len(allowed_values) == 0:
+                message[column] = f"No allowed categories were selected for **{column}**. This column will be removed from the features."
+            elif any(str(val) not in [str(allowed) for allowed in allowed_values] for val in unique_values):
+                message[column] = f"Some data points in **{column}** do not belong to the selected categories. This column will be removed from the features."
             else:
                 formatted_features[column] = {
                     'type': 'text',
                     'data': [str(val) for val in features[column].tolist()],
-                    'range': [str(val) for val in unique_values.tolist()]
+                    'range': [str(val) for val in allowed_values]
                     }
         elif 'int' in str(features[column].dtype):
             unique_values = features[column].unique()

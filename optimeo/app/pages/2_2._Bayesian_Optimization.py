@@ -21,6 +21,12 @@ import pandas as pd
 import numpy as np
 from resources.functions import about_items
 
+
+def dataset_widget_scope() -> str:
+    """Return a stable widget-key suffix for the currently loaded dataset."""
+    filename = st.session_state.get("data_filename") or "no_data"
+    return "".join(ch if ch.isalnum() else "_" for ch in filename)
+
 st.set_page_config(page_title="Bayesian Optimization",
                    page_icon=resource_path("icon.png"),
                    layout="wide", menu_items=about_items)
@@ -159,6 +165,7 @@ The expected improvement balances exploration (trying new points with high uncer
     if data is not None:
         data = clean_names(data, remove_special=True, case_type='preserve')
         st.session_state.loaded_data = data.copy()
+        widget_scope = dataset_widget_scope()
 
         st.write("##### Edit loaded data")
         st.caption("You can directly edit cell values and add/delete rows from the table.")
@@ -200,22 +207,28 @@ Except for categorical parameters, you can increase the ranges to allow the opti
         factor_types = {factor: dtypesF[factor] for factor in factors}
         factor_ranges = {}
         for factor in factors:
-            numeric_values = pd.to_numeric(data[factor], errors='coerce').dropna()
-            if len(numeric_values) > 0:
-                factor_ranges[factor] = [float(np.min(numeric_values)), float(np.max(numeric_values))]
+            if pd.api.types.is_numeric_dtype(data[factor]):
+                numeric_values = pd.to_numeric(data[factor], errors='coerce').dropna()
+                if len(numeric_values) > 0:
+                    factor_ranges[factor] = [float(np.min(numeric_values)), float(np.max(numeric_values))]
+                else:
+                    factor_ranges[factor] = [0.0, 1.0]
             else:
-                factor_ranges[factor] = [0.0, 1.0]
+                factor_ranges[factor] = [str(val) for val in pd.Series(data[factor].dropna().unique()).astype(str).tolist()]
         type_choice = {'object':0, 'int64':1, 'float64':2, 'Int64':1, 'Float64':2}
         colos = st.columns(5)
         colos[1].write("<p style='text-align:center;'><b>Type</b></p>", unsafe_allow_html=True)
         colos[2].write("<p style='text-align:center;'><b>Min</b></p>", unsafe_allow_html=True)
         colos[3].write("<p style='text-align:center;'><b>Max</b></p>", unsafe_allow_html=True)
         for factor in factors:
-            colos = st.columns(5)
+            if factor_types[factor] != 'object':
+                colos = st.columns(5)
+            else:
+                colos = st.columns([1,1,2,1])
             colos[0].write(f"<p style='text-align:right;'><b>{factor}</b></p>", unsafe_allow_html=True)
             factype = type_choice.get(f"{factor_types[factor]}", 0)
             factor_types[factor] = colos[1].selectbox(f"Type of **{factor}**", 
-                ['Categorical', 'Integer', 'Float'], key=f"type_{factor}", 
+                ['Categorical', 'Integer', 'Float'], key=f"type_{widget_scope}_{factor}", 
                 index = factype, label_visibility='collapsed', on_change=model_changed)
             if factor_types[factor] == 'Categorical':
                 factor_types[factor] = 'object'
@@ -224,12 +237,23 @@ Except for categorical parameters, you can increase the ranges to allow the opti
             else:
                 factor_types[factor] = 'float64'
             data[factor] = data[factor].astype(factor_types[factor])
-            if factor_types[factor] != 'object':
+            if factor_types[factor] == 'object':
+                categories = [str(val) for val in pd.Series(data[factor].dropna().unique()).tolist()]
+                selected_categories = colos[2].multiselect(
+                    f"Allowed values for **{factor}**",
+                    options=categories,
+                    default=categories,
+                    key=f"cats_{widget_scope}_{factor}",
+                    label_visibility='collapsed',
+                    on_change=model_changed,
+                )
+                factor_ranges[factor] = selected_categories
+            else:
                 factor_ranges[factor][0] = colos[2].number_input(f"Min value of **{factor}**",
-                    value=factor_ranges[factor][0], key=f"min_{factor}", label_visibility='collapsed',
+                    value=factor_ranges[factor][0], key=f"min_{widget_scope}_{factor}", label_visibility='collapsed',
                     on_change=model_changed)
                 factor_ranges[factor][1] = colos[3].number_input(f"Max value of **{factor}**",
-                    value=factor_ranges[factor][1], key=f"max_{factor}", label_visibility='collapsed',
+                    value=factor_ranges[factor][1], key=f"max_{widget_scope}_{factor}", label_visibility='collapsed',
                     on_change=model_changed)
         messages = []
         if data is not None and len(factors) > 0 and len(responses) > 0:
@@ -257,6 +281,7 @@ with tabs[1]:# Bayesian Optimization
     if data is None:
         st.warning("""The data is not yet loaded. Please upload a data file in the **Sidebar** and select the parameter(s) and outcome(s) in the **Data Loading** tab.""")
     if data is not None and len(factors) > 0 and len(responses) > 0:
+        widget_scope = dataset_widget_scope()
         left,right = st.columns([3,1])
         container = st.container(border=True)
         container.write("#### Model options")
@@ -316,6 +341,7 @@ For example, this can happen if you are using a robot to make experiments with v
         # add a text input to add constraints
         cols = container.columns([2,1])
         feature_constraints = cols[0].text_input("""Add **linear** constraints to the **parameters**""",
+            key=f"feature_constraints_{widget_scope}",
                 help="""Add **linear** constraints to the parameters. Leave blank if no constraints, and use a comma to separate multiple constraints.
 
 The constraints should be in the form of inequalities such as:
@@ -338,6 +364,7 @@ If you want to add non-linear constraint like `x1^2 + x2^2 <= 5`, you should fir
             feature_constraints = []
         
         outcome_constraints = cols[0].text_input(f"""Add **linear** constraints to the **outcomes that are not objectives**: {', '.join(non_metric_outcomes)}""",
+            key=f"outcome_constraints_{widget_scope}",
                 disabled = False if nmetrics > 0 and len(non_metric_outcomes) > 0 else True,
                 help="""You can add constraints to the outcomes **that are not objectives**. Leave blank if no constraints, and use a comma to separate multiple constraints.
 
@@ -452,8 +479,11 @@ The results may vary slightly each time you run it."""):
                     sampler_list[samplerchoice],acq_function, rseed
                     )
             st.session_state.plot_up_to_date = False
-            st.session_state['next'] = st.session_state['bo'].suggest_next_trials()
+            with_predicted = st.session_state['bo'].model is not None
+            st.session_state['next'] = st.session_state['bo'].suggest_next_trials(with_predicted=with_predicted)
             st.session_state['best'] = st.session_state['bo'].get_best_parameters()
+            if not with_predicted:
+                colos[0].info("Predicted outcomes are unavailable until Ax has at least one in-design observation to fit the BO model. Showing candidate experiments only.")
         if (st.session_state['bo'] is not None and 
             st.session_state['next'] is not None and 
             st.session_state['best'] is not None):
@@ -601,24 +631,27 @@ with tabs[2]:# Predictions
         if st.session_state['bo'] is None:
             st.warning("""The model is not yet computed. Please compute the model in the **Bayesian Optimization** tab.""")
         if len(parslice) > 0 and st.session_state['bo'] is not None:
-            pred, stderrs = st.session_state['bo'].predict([parslice])
-            pred = pd.DataFrame(pred)
-            stderrs = pd.DataFrame(stderrs)
-            # Concatenate side by side
-            result = pd.concat([pred, stderrs.add_suffix(' standard error')], axis=1)
+            if st.session_state['bo'].model is None:
+                st.info("Predictions are unavailable for the current model state. This usually means Ax could not fit a BO model from the current in-design observations, so only candidate generation is available.")
+            else:
+                pred, stderrs = st.session_state['bo'].predict([parslice])
+                pred = pd.DataFrame(pred)
+                stderrs = pd.DataFrame(stderrs)
+                # Concatenate side by side
+                result = pd.concat([pred, stderrs.add_suffix(' standard error')], axis=1)
 
-            # If you want to pivot to long format with columns: response, prediction, standard error
-            result_long = pd.DataFrame([
-                {
-                    'Response': col,
-                    'Prediction': pred[col].iloc[0],
-                    'Standard error': stderrs[col].iloc[0]
-                }
-                for col in pred.columns
-            ])
+                # If you want to pivot to long format with columns: response, prediction, standard error
+                result_long = pd.DataFrame([
+                    {
+                        'Response': col,
+                        'Prediction': pred[col].iloc[0],
+                        'Standard error': stderrs[col].iloc[0]
+                    }
+                    for col in pred.columns
+                ])
 
-            cols = st.columns([1,2,1])
-            cols[1].dataframe(result_long, hide_index=True)
+                cols = st.columns([1,2,1])
+                cols[1].dataframe(result_long, hide_index=True)
             # actual = {}
             # cols[1].write("Update model with actual value of the response for these parameters")
             # for i in range(len(responses)):

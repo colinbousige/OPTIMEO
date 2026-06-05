@@ -4,7 +4,7 @@
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the MIT License as published by
 # the Free Software Foundation, either version 3 of the License, or
-# any later version. 
+# any later version.
 
 """
 This module provides a class for optimizing experiments using Bayesian Optimization (BO) with the [Ax platform](https://ax.dev/).
@@ -14,38 +14,38 @@ You can see an example notebook [here](../examples/bo.ipynb).
 
 """
 
+import matplotlib as mpl
+import re
+import plotly.express as px
+import plotly.graph_objects as go
+from botorch.acquisition.analytic import *
+from ax.service.ax_client import AxClient, ObjectiveProperties
+from ax.plot.slice import plot_slice
+from ax.plot.pareto_utils import compute_posterior_pareto_frontier
+from ax.plot.pareto_frontier import plot_pareto_frontier
+from ax.plot.feature_importances import plot_feature_importance_by_feature_plotly
+from ax.plot.contour import interact_contour, plot_contour
+from ax.analysis.plotly.sensitivity import SensitivityAnalysisPlot
+from ax.generation_strategy.generation_strategy import GenerationStrategy
+from ax.generation_strategy.generation_node import GenerationStep
+from ax.exceptions.core import DataRequiredError
+from ax.core.trial_status import TrialStatus
+from ax.core.observation import ObservationFeatures
+from ax.adapter.registry import Generators
+from typing import Any, Dict, List, Optional, Union, Tuple
+from janitor import clean_names
+import random
+import pandas as pd
+import numpy as np
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 warnings.simplefilter(action='ignore', category=DeprecationWarning)
 warnings.simplefilter(action='ignore', category=UserWarning)
 warnings.simplefilter(action='ignore', category=RuntimeError)
 
-import numpy as np
-import pandas as pd
-import random
-from janitor import clean_names
-from typing import Any, Dict, List, Optional, Union, Tuple
 
-from ax.adapter.registry import Generators
-from ax.core.observation import ObservationFeatures
-from ax.core.trial_status import TrialStatus
-from ax.exceptions.core import DataRequiredError
-from ax.generation_strategy.generation_node import GenerationStep
-from ax.generation_strategy.generation_strategy import GenerationStrategy
-from ax.analysis.plotly.sensitivity import SensitivityAnalysisPlot
-from ax.plot.contour import interact_contour, plot_contour
-from ax.plot.feature_importances import plot_feature_importance_by_feature_plotly
-from ax.plot.pareto_frontier import plot_pareto_frontier
-from ax.plot.pareto_utils import compute_posterior_pareto_frontier
-from ax.plot.slice import plot_slice
-from ax.service.ax_client import AxClient, ObjectiveProperties
-from botorch.acquisition.analytic import *
-import plotly.graph_objects as go
-import plotly.express as px
-import re
-import matplotlib as mpl
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
 class BOExperiment:
     """
@@ -69,7 +69,7 @@ class BOExperiment:
         experiment.suggest_next_trials()
         experiment.plot_model(metricname='outcome1')
         experiment.plot_optimization_trace()
-    
+
     Parameters
     ----------
     features: Dict[str, Dict[str, Any]]
@@ -113,12 +113,12 @@ class BOExperiment:
         The acquisition function to use for the optimization process. It must be a dict with 2 keys:
         - `acqf`: the acquisition function class to use (e.g., `UpperConfidenceBound`),
         - `acqf_kwargs`: a dict of the kwargs to pass to the acquisition function class. (e.g. `{'beta': 0.1}`).
-        
+
         If not provided, the default acquisition function is used (`LogExpectedImprovement` or `qLogExpectedImprovement` if N>1).
-    
+
     Attributes
     ----------
-    
+
     features: Dict[str, Dict[str, Any]]
         A dictionary defining the features of the experiment, including their types and ranges.
     outcomes: Dict[str, Dict[str, Any]]
@@ -154,7 +154,7 @@ class BOExperiment:
         The fixed features for the experiment, used to generate new candidates.
     candidate:
         The candidate(s) suggested by the optimization process.
-        
+
 
     Methods
     -------
@@ -193,19 +193,19 @@ class BOExperiment:
                  acq_func=None,
                  seed=42) -> None:
         self._first_initialization_done = False
-        self.ranges              = ranges
-        self.features            = features
-        self.names               = list(self._features.keys())
-        self.fixed_features      = fixed_features
-        self.outcomes            = outcomes
-        self.N                   = N
-        self.maximize            = maximize
+        self.ranges = ranges
+        self.features = features
+        self.names = list(self._features.keys())
+        self.fixed_features = fixed_features
+        self.outcomes = outcomes
+        self.N = N
+        self.maximize = maximize
         self.outcome_constraints = outcome_constraints
         self.objective_thresholds = objective_thresholds
         self.feature_constraints = feature_constraints
-        self.optim               = optim
-        self.acq_func            = acq_func
-        self.seed                = seed
+        self.optim = optim
+        self.acq_func = acq_func
+        self.seed = seed
         self.candidate = None
         """The candidate(s) suggested by the optimization process."""
         self.ax_client = None
@@ -246,7 +246,7 @@ class BOExperiment:
     def features(self):
         """
         A dictionary defining the features of the experiment, including their types and ranges.
-        
+
         Example
         -------
         .. code-block:: python
@@ -273,7 +273,8 @@ class BOExperiment:
             else:
                 feature_data = self._features[name].get('data', [])
                 if len(feature_data) == 0:
-                    self._features[name]['range'] = self._features[name].get('range', [])
+                    self._features[name]['range'] = self._features[name].get(
+                        'range', [])
                 elif self._features[name]['type'] == 'text':
                     self._features[name]['range'] = list(set(feature_data))
                 elif self._features[name]['type'] == 'int':
@@ -284,12 +285,12 @@ class BOExperiment:
                                                      float(np.max(self._features[name]['data']))]
         if self._first_initialization_done:
             self.initialize_ax_client()
-    
+
     @property
     def ranges(self):
         """
         A dictionary defining the ranges of the features. Default is `None`.
-        
+
         If not provided, the ranges will be inferred from the features data.
         The ranges should be in the format `{'feature_name': [minvalue,maxvalue]}`.
         """
@@ -304,14 +305,14 @@ class BOExperiment:
             if not isinstance(value, dict):
                 raise ValueError("ranges must be a dictionary")
         self._ranges = value
-    
+
     @property
     def names(self):
         """
         The names of the features.
         """
         return self._names
-    
+
     @names.setter
     def names(self, value):
         """
@@ -325,7 +326,7 @@ class BOExperiment:
     def outcomes(self):
         """
         A dictionary defining the outcomes of the experiment, including their types and observed data.
-        
+
         Example
         -------
         .. code-block:: python
@@ -348,7 +349,7 @@ class BOExperiment:
         self.out_names = list(value.keys())
         if self._first_initialization_done:
             self.initialize_ax_client()
-    
+
     @property
     def fixed_features(self):
         """
@@ -370,7 +371,8 @@ class BOExperiment:
                 raise ValueError("fixed_features must be a dictionary")
             for name in value.keys():
                 if name not in self.names:
-                    raise ValueError(f"Fixed feature '{name}' not found in features")
+                    raise ValueError(
+                        f"Fixed feature '{name}' not found in features")
             # fixed_features should be an ObservationFeatures object
             self._fixed_features = ObservationFeatures(parameters=value)
         if self._first_initialization_done:
@@ -410,10 +412,11 @@ class BOExperiment:
         if isinstance(value, bool):
             self._maximize = {out: value for out in self.out_names}
         elif isinstance(value, dict) and len(value) == len(self._outcomes):
-            self._maximize = {k:v for k,v in value.items() if 
+            self._maximize = {k: v for k, v in value.items() if
                               (k in self.out_names and isinstance(v, bool))}
         else:
-            raise ValueError("maximize must be a boolean or a list of booleans with the same length as outcomes")
+            raise ValueError(
+                "maximize must be a boolean or a list of booleans with the same length as outcomes")
         if self._first_initialization_done:
             self.initialize_ax_client()
 
@@ -458,13 +461,16 @@ class BOExperiment:
             validated = {}
             for name, threshold in value.items():
                 if name not in self.out_names:
-                    raise ValueError(f"Objective threshold provided for unknown outcome '{name}'")
+                    raise ValueError(
+                        f"Objective threshold provided for unknown outcome '{name}'")
                 if not isinstance(threshold, (int, float)):
-                    raise ValueError(f"Objective threshold for '{name}' must be a number")
+                    raise ValueError(
+                        f"Objective threshold for '{name}' must be a number")
                 validated[name] = float(threshold)
             self._objective_thresholds = validated
         else:
-            raise ValueError("objective_thresholds must be a dictionary or None")
+            raise ValueError(
+                "objective_thresholds must be a dictionary or None")
         if self._first_initialization_done:
             self.initialize_ax_client()
 
@@ -472,7 +478,7 @@ class BOExperiment:
     def feature_constraints(self):
         """
         Constraints on the features, specified as a list of strings. Default is `None`.
-        
+
         Example
         -------
         .. code-block:: python
@@ -514,7 +520,8 @@ class BOExperiment:
         """
         value = value.lower()
         if value not in ['bo', 'sobol']:
-            raise ValueError("Optimization method must be either 'bo' or 'sobol'")
+            raise ValueError(
+                "Optimization method must be either 'bo' or 'sobol'")
         self._optim = value
         if self._first_initialization_done:
             self.set_gs()
@@ -524,8 +531,10 @@ class BOExperiment:
         """
         Returns a DataFrame of the current data in the experiment, including features and outcomes.
         """
-        feature_data = {name: info['data'] for name, info in self._features.items()}
-        outcome_data = {name: info['data'] for name, info in self._outcomes.items()}
+        feature_data = {name: info['data']
+                        for name, info in self._features.items()}
+        outcome_data = {name: info['data']
+                        for name, info in self._outcomes.items()}
         data_dict = {**feature_data, **outcome_data}
         return pd.DataFrame(data_dict)
 
@@ -537,8 +546,10 @@ class BOExperiment:
         if not isinstance(value, pd.DataFrame):
             raise ValueError("Data must be a pandas DataFrame")
 
-        feature_columns = [col for col in value.columns if col in self._features]
-        outcome_columns = [col for col in value.columns if col in self._outcomes]
+        feature_columns = [
+            col for col in value.columns if col in self._features]
+        outcome_columns = [
+            col for col in value.columns if col in self._outcomes]
 
         for col in feature_columns:
             self._features[col]['data'] = value[col].tolist()
@@ -555,24 +566,23 @@ class BOExperiment:
         The Pareto frontier for multi-objective optimization experiments.
         """
         return self._pareto_frontier
-    
+
     @pareto_frontier.setter
     def pareto_frontier(self, value):
         """
         Set the Pareto frontier of the experiment.
         """
         self._pareto_frontier = value
-        
-    
+
     @property
     def acq_func(self):
         """
         The acquisition function to use for the optimization process. It must be a dict with 2 keys:
         - `acqf`: the acquisition function class to use (e.g., `UpperConfidenceBound`),
         - `acqf_kwargs`: a dict of the kwargs to pass to the acquisition function class. (e.g. `{'beta': 0.1}`).
-        
+
         If not provided, the default acquisition function is used (`LogExpectedImprovement` or `qLogExpectedImprovement` if N>1).
-        
+
         Example
         -------
         .. code-block:: python
@@ -583,7 +593,7 @@ class BOExperiment:
             }
         """
         return self._acq_func
-    
+
     @acq_func.setter
     def acq_func(self, value):
         """
@@ -619,7 +629,7 @@ Input data:
         Initialize the AxClient with the experiment's parameters, objectives, and constraints.
         """
         print('\n========   INITIALIZING MODEL   ========\n')
-        self.ax_client = AxClient(verbose_logging=False, 
+        self.ax_client = AxClient(verbose_logging=False,
                                   suppress_storage_errors=True)
         self.parameters = []
         for name, info in self._features.items():
@@ -653,8 +663,9 @@ Input data:
                 threshold = None
                 if self._objective_thresholds is not None:
                     threshold = self._objective_thresholds.get(k)
-                objectives[k] = ObjectiveProperties(minimize=not v, threshold=threshold)
-        
+                objectives[k] = ObjectiveProperties(
+                    minimize=not v, threshold=threshold)
+
         self.ax_client.create_experiment(
             name="bayesian_optimization",
             parameters=self.parameters,
@@ -666,8 +677,10 @@ Input data:
 
         if len(next(iter(self._outcomes.values()))['data']) > 0:
             for i in range(len(next(iter(self._outcomes.values()))['data'])):
-                params = {name: info['data'][i] for name, info in self._features.items()}
-                outcomes = {name: info['data'][i] for name, info in self._outcomes.items()}
+                params = {name: info['data'][i]
+                          for name, info in self._features.items()}
+                outcomes = {name: info['data'][i]
+                            for name, info in self._outcomes.items()}
                 self.ax_client.attach_trial(params)
                 self.ax_client.complete_trial(trial_index=i, raw_data=outcomes)
 
@@ -695,12 +708,12 @@ Input data:
 
         try:
             self.model = Generators.BOTORCH_MODULAR(
-                    experiment=self.ax_client.experiment,
-                    data=self.ax_client.experiment.fetch_data()
-                    )
+                experiment=self.ax_client.experiment,
+                data=self.ax_client.experiment.fetch_data()
+            )
         except DataRequiredError:
             self.model = None
-    
+
     def set_gs(self):
         """
         Set the generation strategy for the experiment.
@@ -713,67 +726,69 @@ Input data:
             if self.model is None:
                 self.gs = GenerationStrategy(
                     steps=[GenerationStep(
-                                generator=Generators.SOBOL,
-                                num_trials=-1,
-                                should_deduplicate=True,
-                                model_kwargs={"seed": self.seed},
-                                model_gen_kwargs={},
-                            )
-                        ]
+                        generator=Generators.SOBOL,
+                        num_trials=-1,
+                        should_deduplicate=True,
+                        model_kwargs={"seed": self.seed},
+                        model_gen_kwargs={},
                     )
+                    ]
+                )
             elif self.acq_func is None:
                 self.gs = GenerationStrategy(
                     steps=[GenerationStep(
-                                generator=Generators.BOTORCH_MODULAR,
-                                num_trials=-1,  # No limitation on how many trials should be produced from this step
-                                max_parallelism=3,  # Parallelism limit for this step, often lower than for Sobol
-                            )
-                        ]
+                        generator=Generators.BOTORCH_MODULAR,
+                        num_trials=-1,  # No limitation on how many trials should be produced from this step
+                        max_parallelism=3,  # Parallelism limit for this step, often lower than for Sobol
                     )
+                    ]
+                )
             else:
                 self.gs = GenerationStrategy(
                     steps=[GenerationStep(
-                                generator=Generators.BOTORCH_MODULAR,
-                                num_trials=-1,  # No limitation on how many trials should be produced from this step
-                                max_parallelism=3,  # Parallelism limit for this step, often lower than for Sobol
-                                model_kwargs={
-                                    "seed": self.seed,
-                                    "botorch_acqf_class": self.acq_func['acqf'],
-                                    "botorch_acqf_options": self.acq_func['acqf_kwargs'],
-                                },
-                            )
-                        ]
+                        generator=Generators.BOTORCH_MODULAR,
+                        num_trials=-1,  # No limitation on how many trials should be produced from this step
+                        max_parallelism=3,  # Parallelism limit for this step, often lower than for Sobol
+                        model_kwargs={
+                            "seed": self.seed,
+                            "botorch_acqf_class": self.acq_func['acqf'],
+                            "botorch_acqf_options": self.acq_func['acqf_kwargs'],
+                        },
                     )
+                    ]
+                )
         elif self._optim == 'sobol':
             self.gs = GenerationStrategy(
                 steps=[GenerationStep(
-                            generator=Generators.SOBOL,
-                            num_trials=-1,  # How many trials should be produced from this generation step
-                            should_deduplicate=True,  # Deduplicate the trials
-                            model_kwargs={"seed": self.seed},  # Any kwargs you want passed into the model
-                            model_gen_kwargs={},  # Any kwargs you want passed to `modelbridge.gen`
-                        )
-                    ]
+                    generator=Generators.SOBOL,
+                    num_trials=-1,  # How many trials should be produced from this generation step
+                    should_deduplicate=True,  # Deduplicate the trials
+                    # Any kwargs you want passed into the model
+                    model_kwargs={"seed": self.seed},
+                    model_gen_kwargs={},  # Any kwargs you want passed to `modelbridge.gen`
                 )
-        generated_runs = self.gs.gen(
-                experiment=self.ax_client.experiment,  # Ax `Experiment`, for which to generate new candidates
-                data=None,  # Ax `Data` to use for model training, optional.
-                n=self._N,  # Number of candidate arms to produce
-                fixed_features=self._fixed_features, 
-            pending_observations=None,
+                ]
             )
+        generated_runs = self.gs.gen(
+            # Ax `Experiment`, for which to generate new candidates
+            experiment=self.ax_client.experiment,
+            data=None,  # Ax `Data` to use for model training, optional.
+            n=self._N,  # Number of candidate arms to produce
+            fixed_features=self._fixed_features,
+            pending_observations=None,
+        )
         self.generator_run = generated_runs[0][0]
-    
+
     def clear_trials(self):
         """
         Clear all trials in the experiment.
         """
         # Get all pending trial indices
-        pending_trials = [k for k,i in self.ax_client.experiment.trials.items() 
-                            if i.status==TrialStatus.CANDIDATE]
+        pending_trials = [k for k, i in self.ax_client.experiment.trials.items()
+                          if i.status == TrialStatus.CANDIDATE]
         for i in pending_trials:
             self.ax_client.experiment.trials[i].mark_abandoned()
-    
+
     def suggest_next_trials(self, with_predicted=True):
         """
         Suggest the next set of trials based on the current model and optimization strategy.
@@ -788,9 +803,11 @@ Input data:
         if self.ax_client is None:
             self.initialize_ax_client()
         if self._N == 1:
-            self.candidate = self.ax_client.experiment.new_trial(self.generator_run)
+            self.candidate = self.ax_client.experiment.new_trial(
+                self.generator_run)
         else:
-            self.candidate = self.ax_client.experiment.new_batch_trial(self.generator_run)
+            self.candidate = self.ax_client.experiment.new_batch_trial(
+                self.generator_run)
         if hasattr(self.candidate, "arms"):
             arm_parameters = [arm.parameters for arm in self.candidate.arms]
         else:
@@ -814,7 +831,8 @@ Input data:
     def _get_observed_best_parameters(self):
         """Return best observed rows when no fitted Ax model is available yet."""
         data = self.data.copy()
-        objective_names = [name for name, maximize in self._maximize.items() if isinstance(maximize, bool)]
+        objective_names = [
+            name for name, maximize in self._maximize.items() if isinstance(maximize, bool)]
         if len(objective_names) == 0:
             return pd.DataFrame()
 
@@ -851,7 +869,8 @@ Input data:
         if self.ax_client is None:
             self.initialize_ax_client()
         if self.model is None:
-            raise ValueError("Predictions require at least one completed experiment with numeric outcome data.")
+            raise ValueError(
+                "Predictions require at least one completed experiment with numeric outcome data.")
         obs_feats = [ObservationFeatures(parameters=p) for p in params]
         f, cm = self.model.predict(obs_feats)
         # return prediction and std errors as a list of dictionaries
@@ -865,8 +884,10 @@ Input data:
                     'std': np.sqrt(cm[metric_name][metric_name][i])
                 }
             predictions.append(pred_dict)
-        preds = [{k: v['mean'] for k, v in pred.items()} for pred in predictions]
-        stderrs = [{k: v['std'] for k, v in pred.items()} for pred in predictions]
+        preds = [{k: v['mean'] for k, v in pred.items()}
+                 for pred in predictions]
+        stderrs = [{k: v['std'] for k, v in pred.items()}
+                   for pred in predictions]
         return preds, stderrs
 
     def update_experiment(self, params, outcomes):
@@ -922,12 +943,15 @@ Input data:
             self.suggest_next_trials()
         cand_name = 'Candidate' if self._N == 1 else 'Candidates'
         mname = self.ax_client.objective_names[0] if metricname is None else metricname
-        param_name = [name for name in self.names if name not in slice_values.keys()]
-        par_numeric = [name for name in param_name if self._features[name]['type'] in ['int', 'float']]
+        param_name = [
+            name for name in self.names if name not in slice_values.keys()]
+        par_numeric = [
+            name for name in param_name if self._features[name]['type'] in ['int', 'float']]
 
         if self.model is None:
             completed_trials = self.ax_client.get_trials_data_frame()
-            completed_trials = completed_trials[completed_trials['trial_status'] != 'CANDIDATE'].copy()
+            completed_trials = completed_trials[completed_trials['trial_status'] != 'CANDIDATE'].copy(
+            )
             if mname not in completed_trials.columns:
                 return go.Figure()
 
@@ -990,11 +1014,13 @@ Input data:
 
         plotly_fig = go.Figure(fig.data)
         all_trials = self.ax_client.get_trials_data_frame()
-        completed_trials = all_trials[all_trials['trial_status'] != 'CANDIDATE'].copy()
+        completed_trials = all_trials[all_trials['trial_status'] != 'CANDIDATE'].copy(
+        )
         # compute distance to slice
         col_to_consider = completed_trials[[k for k in slice_values.keys()]]
         completed_trials.loc[:, 'signed_dist_to_slice'] = (
-            (col_to_consider - slice_values).sum(axis=1)  # Sum of signed differences
+            # Sum of signed differences
+            (col_to_consider - slice_values).sum(axis=1)
         )
         signed_dists = completed_trials['signed_dist_to_slice'].values
         positive_dists = signed_dists[signed_dists >= 0]
@@ -1008,7 +1034,8 @@ Input data:
 
         # Normalize negative distances to [-1, 0]
         if len(negative_dists) > 0 and np.min(negative_dists) < 0:
-            normalized_negative = negative_dists / np.abs(np.min(negative_dists))
+            normalized_negative = negative_dists / \
+                np.abs(np.min(negative_dists))
         else:
             normalized_negative = np.zeros_like(negative_dists)
 
@@ -1017,9 +1044,12 @@ Input data:
         normalized_signed_dists[signed_dists >= 0] = normalized_positive
         normalized_signed_dists[signed_dists < 0] = normalized_negative
 
-        completed_trials.loc[:, 'normalized_signed_dist'] = normalized_signed_dists
+        completed_trials.loc[:,
+                             'normalized_signed_dist'] = normalized_signed_dists
         coolwarm = mpl.colormaps['bwr']
-        normalized_values = (completed_trials['normalized_signed_dist'] + 1) / 2  # Map from [-1,1] to [0,1]
+        # Map from [-1,1] to [0,1]
+        normalized_values = (
+            completed_trials['normalized_signed_dist'] + 1) / 2
         colors = [
             f"rgb({int(r*255)}, {int(g*255)}, {int(b*255)})"
             for r, g, b, _ in coolwarm(normalized_values)
@@ -1041,16 +1071,19 @@ Input data:
                         match = re.search(r'Arm (\d+_\d+)', text)
                         if match:
                             arm_names.append(match.group(1))
-                    arm_to_color = dict(zip(completed_trials['arm_name'], completed_trials['colors']))
-                    trace.marker.color = [arm_to_color[arm] for arm in arm_names]
+                    arm_to_color = dict(
+                        zip(completed_trials['arm_name'], completed_trials['colors']))
+                    trace.marker.color = [arm_to_color[arm]
+                                          for arm in arm_names]
                 trace.marker.symbol = "circle"
                 trace.marker.size = 10
                 trace.marker.line.width = 2
                 trace.marker.line.color = 'black'
                 # if len(opacities) > 0:
-                    # trace.marker.opacity = opacities
+                # trace.marker.opacity = opacities
                 if trace.text is not None:
-                    trace.text = [t.replace('Arm', '<b>Sample').replace("_0","</b>") for t in trace.text]
+                    trace.text = [t.replace('Arm', '<b>Sample').replace(
+                        "_0", "</b>") for t in trace.text]
             if trace.legendgroup == cand_name:
                 trace.marker.line.color = 'red'
                 trace.marker.color = "orange"
@@ -1061,7 +1094,8 @@ Input data:
                 trace.hoverinfo = "text"
                 trace.hoverlabel = dict(bgcolor="#f8e3cd", font_color='black')
                 if trace.text is not None:
-                    trace.text = [t.replace("<i>","").replace("</i>","") for t in trace.text]
+                    trace.text = [t.replace("<i>", "").replace(
+                        "</i>", "") for t in trace.text]
                 trace.text = [
                     f"<b>Candidate {i+1}</b><br>{'<br>'.join([f'{col}: {val}' for col, val in trials.iloc[i].items()])}"
                     for t in trace.text
@@ -1114,7 +1148,6 @@ Input data:
             ),
         )
         return plotly_fig
-
 
     def plot_optimization_trace(self, optimum=None):
         """
@@ -1195,7 +1228,8 @@ Input data:
                 if not isinstance(label, str) or "_OH_PARAM_" not in label:
                     return label
 
-                match = re.match(r"^(?P<feature>.+)_OH_PARAM_(?P<index>\d+)$", label)
+                match = re.match(
+                    r"^(?P<feature>.+)_OH_PARAM_(?P<index>\d+)$", label)
                 if match is None:
                     return label
 
@@ -1226,12 +1260,15 @@ Input data:
 
                     y_values = getattr(trace, "y", None)
                     if y_values is not None:
-                        trace.y = [_humanize_sensitivity_label(value) for value in y_values]
+                        trace.y = [_humanize_sensitivity_label(
+                            value) for value in y_values]
 
                 hovertemplate = getattr(trace, "hovertemplate", None)
                 if hovertemplate is not None:
-                    hovertemplate = hovertemplate.replace("truncated_parameter_name=%{y}<br>", "")
-                    hovertemplate = hovertemplate.replace("truncated_parameter_name=%{y}<br />", "")
+                    hovertemplate = hovertemplate.replace(
+                        "truncated_parameter_name=%{y}<br>", "")
+                    hovertemplate = hovertemplate.replace(
+                        "truncated_parameter_name=%{y}<br />", "")
                     trace.hovertemplate = hovertemplate
 
             fig.update_layout(barmode="overlay")
@@ -1342,7 +1379,7 @@ Input data:
             # For 3+ objectives, keep Pareto-optimal points and visualize in plot_pareto_frontier.
             self.pareto_frontier = self.ax_client.get_pareto_optimal_parameters()
         return self.pareto_frontier
-    
+
     def plot_pareto_frontier(self, show_error_bars=True):
         """
         Plot the Pareto frontier for multi-objective optimization experiments.
@@ -1362,7 +1399,8 @@ Input data:
 
         if self.Nmetrics > 2:
             df = ordered_dict_to_dataframe(self.pareto_frontier)
-            objective_names = [name for name in self.ax_client.objective_names if name in df.columns]
+            objective_names = [
+                name for name in self.ax_client.objective_names if name in df.columns]
             if len(objective_names) < 2:
                 return None
             fig = px.scatter_matrix(
@@ -1375,7 +1413,7 @@ Input data:
         else:
             fig = plot_pareto_frontier(self.pareto_frontier)
             fig = go.Figure(fig.data)
-        
+
             # Modify traces to show/hide error bars
             if not show_error_bars:
                 for trace in fig.data:
@@ -1384,7 +1422,7 @@ Input data:
                         trace.error_x = None
                     if hasattr(trace, 'error_y') and trace.error_y is not None:
                         trace.error_y = None
-        
+
         fig.update_layout(
             plot_bgcolor="white",  # White background
             legend=dict(bgcolor='rgba(0,0,0,0)'),
@@ -1442,7 +1480,8 @@ Input data:
             best = ordered_dict_to_dataframe(best_parameters)
         return best
 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
 
 def flatten_dict(d, parent_key="", sep="_"):
     """
@@ -1457,7 +1496,8 @@ def flatten_dict(d, parent_key="", sep="_"):
             items.append((new_key, v))
     return dict(items)
 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
 
 def ordered_dict_to_dataframe(data):
     """
@@ -1476,7 +1516,8 @@ def ordered_dict_to_dataframe(data):
                                    [key for key in sub_dict.keys()])
     return df
 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
 
 def read_experimental_data(file_path: str, out_pos=[-1]) -> Tuple[Dict[str, Dict[str, Any]], Dict[str, Dict[str, Any]]]:
     """
@@ -1532,5 +1573,5 @@ def read_experimental_data(file_path: str, out_pos=[-1]) -> Tuple[Dict[str, Dict
                                            'data': outcomes[column].tolist()}
     formatted_outcomes = {name: {'type': info['type'],
                                  'data': outcomes[name].tolist()}
-                           for name, info in outcome_definitions.items()}
+                          for name, info in outcome_definitions.items()}
     return formatted_features, formatted_outcomes

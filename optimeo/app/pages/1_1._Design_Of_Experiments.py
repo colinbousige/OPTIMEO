@@ -4,7 +4,7 @@
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the MIT License as published by
 # the Free Software Foundation, either version 3 of the License, or
-# any later version. 
+# any later version.
 
 import streamlit as st
 import numpy as np
@@ -17,48 +17,51 @@ from optimeo.doe import *
 from datetime import datetime
 import re
 
-st.set_page_config(page_title="Design Of Experiment", 
+st.set_page_config(page_title="Design Of Experiment",
                    page_icon=resource_path("icon.png"),
                    layout="wide", menu_items=about_items)
 style = read_markdown_file(resource_path("style.css"))
 st.markdown(style, unsafe_allow_html=True)
 
 defaultParNames = ["Temperature", "ConcentrationA", "ConcentrationB", "Reaction_time",
-                   "Flux", "Parameter_6", "Parameter_7", "Parameter_8", "Parameter_9", 
-                   "Parameter_10", "Parameter_11", "Parameter_12", "Parameter_13", 
-                   "Parameter_14", "Parameter_15", "Parameter_16", "Parameter_17", 
+                   "Flux", "Parameter_6", "Parameter_7", "Parameter_8", "Parameter_9",
+                   "Parameter_10", "Parameter_11", "Parameter_12", "Parameter_13",
+                   "Parameter_14", "Parameter_15", "Parameter_16", "Parameter_17",
                    "Parameter_18", "Parameter_19", "Parameter_20"]
 
 rseed = 42
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Definition of User Interface
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 st.write("""
 # Design Of Experiment
 """)
 
 design_type = st.sidebar.selectbox("Design type",
-        ['Sobol sequence','Full Factorial', 'Fractional Factorial', 
-         'Definitive Screening', 'Space Filling Latin Hypercube', 
-         'Randomized Latin Hypercube', 'Optimal', 'Plackett-Burman', 'Box-Behnken', 'Central Composite'])
+                                   ['Sobol sequence', 'Full Factorial', 'Fractional Factorial',
+                                    'Definitive Screening', 'Space Filling Latin Hypercube',
+                                    'Randomized Latin Hypercube', 'Optimal', 'Plackett-Burman', 'Box-Behnken', 'Central Composite'])
 
 cols = st.sidebar.columns(2)
 cols[0].write("N parameters")
-Npars = cols[0].number_input("N parameters", min_value=1, max_value=20, value=2, label_visibility="collapsed")
-parameters = np.array([{'name': '', 'actual': 0., 'coded': 0.} for i in range(Npars)])
+Npars = cols[0].number_input(
+    "N parameters", min_value=1, max_value=20, value=2, label_visibility="collapsed")
+parameters = np.array([{'name': '', 'actual': 0., 'coded': 0.}
+                      for i in range(Npars)])
 cols[1].write("Shuffle experiments order")
-randomize = cols[1].checkbox("Randomize", value=True, label_visibility="collapsed")
+randomize = cols[1].checkbox(
+    "Randomize", value=True, label_visibility="collapsed")
 reduction = 2
 order = 2
 Nexp = 4
-center = (1,1)
+center = (1, 1)
 alpha = 'o'
 face = 'ccc'
 feature_constraints = []
 
-if design_type=='Optimal':
-    model_order = st.sidebar.selectbox("Model order:", 
-            ['linear','quadratic','cubic'], index=1)
+if design_type == 'Optimal':
+    model_order = st.sidebar.selectbox("Model order:",
+                                       ['linear', 'quadratic', 'cubic'], index=1)
     if model_order == 'linear':
         order = 1
         minexp = Npars + 1
@@ -68,8 +71,9 @@ if design_type=='Optimal':
     elif model_order == 'cubic':
         order = 3
         minexp = int((Npars+1)*(Npars+2)*(Npars+3)/6)
-# # # # # # # # # # # # # # # # 
-tab1, tab2, tab3 = st.tabs(["How to choose the proper design?", "Parameters Ranges", "Experimental Design"])
+# # # # # # # # # # # # # # # #
+tab1, tab2, tab3 = st.tabs(
+    ["How to choose the proper design?", "Parameters Ranges", "Experimental Design"])
 
 with tab1:
     # Add an explanation section at the bottom
@@ -92,13 +96,13 @@ with tab1:
     # Create filter section
     st.write(f"#### Filter designs based on your requirements")
 
-    col1, col2, col3, col4 = st.columns([2,3,3,3])
+    col1, col2, col3, col4 = st.columns([2, 3, 3, 3])
 
     with col1:
         # Filter options for the left column
         num_factors = st.radio(
             "Number of factors:",
-            ["Any", "Few factors (2-5)", "Many factors (6+)"]
+            ["Any", "Few (2-5)", "Many` (6+)"]
         )
     with col2:
         factor_types = st.pills(
@@ -107,7 +111,7 @@ with tab1:
             default=["Continuous", "Categorical (multi-level)"],
             selection_mode="multi"
         )
-        
+
     with col3:
         # Filter options for the right column
         relationships = st.pills(
@@ -119,7 +123,8 @@ with tab1:
     with col4:
         purpose = st.radio(
             "Primary purpose:",
-            ["Any", "Screening (identify important factors)", "Optimization", "Comprehensive exploration"]
+            ["Any", "Screening (identify important factors)",
+             "Optimization", "Comprehensive exploration"]
         )
 
     # Dictionary of DoE methods and their characteristics
@@ -212,23 +217,23 @@ with tab1:
     for method, properties in doe_methods.items():
         # Check if the method passes all filters
         passes_filters = True
-        
+
         # Filter by number of factors
         if num_factors != "Any" and num_factors not in properties["num_factors"]:
             passes_filters = False
-        
+
         # Filter by factor types
         if not any(ft in properties["factor_types"] for ft in factor_types):
             passes_filters = False
-            
+
         # Filter by relationships
         if not any(rel in properties["relationships"] for rel in relationships):
             passes_filters = False
-            
+
         # Filter by purpose
         if purpose != "Any" and purpose not in properties["purpose"]:
             passes_filters = False
-        
+
         # If the method passes all filters, add it to the filtered methods
         if passes_filters:
             filtered_methods[method] = properties
@@ -239,66 +244,69 @@ with tab1:
     # Display filtered methods in expanders
     if filtered_methods:
         cols = st.columns(2)
-        
+
         for i, (method, properties) in enumerate(filtered_methods.items()):
             col_idx = i % 2
-            
+
             with cols[col_idx].expander(f":blue[**{method}**]\n\n{properties['description']}"):
                 st.write(properties["detailed_info"])
-                
+
                 # Display properties as badges
                 st.write("---")
                 st.write("**Characteristics:**")
-                
+
                 badge_cols = st.columns(2)
-                
+
                 with badge_cols[0]:
-                    st.info(f"**Factor count:** {', '.join(properties['num_factors'])}")
-                    st.info(f"**Factor types:** {', '.join(properties['factor_types'])}")
-                
+                    st.info(
+                        f"**Factor count:** {', '.join(properties['num_factors'])}")
+                    st.info(
+                        f"**Factor types:** {', '.join(properties['factor_types'])}")
+
                 with badge_cols[1]:
-                    st.info(f"**Relationships:** {', '.join(properties['relationships'])}")
+                    st.info(
+                        f"**Relationships:** {', '.join(properties['relationships'])}")
                     st.info(f"**Purpose:** {', '.join(properties['purpose'])}")
     else:
-        st.warning("No design methods match your selected filters. Try broadening your criteria.")
-
-    
-
+        st.warning(
+            "No design methods match your selected filters. Try broadening your criteria.")
 
 
 with tab2:
     for par in range(Npars):
         cols = st.columns(5)
-        parameters[par]['name'] = cols[0].text_input(f"**Parameter {par+1}:**", 
-                                            key=f"par{1+par}", 
-                                            value=defaultParNames[par]).replace(" ","_")
-        parameters[par]['type'] = cols[1].selectbox("Parameter Type", 
-                                ("Float", "Integer", "Categorical"), key=f"cat{1+par}")
+        parameters[par]['name'] = cols[0].text_input(f"**Parameter {par+1}:**",
+                                                     key=f"par{1+par}",
+                                                     value=defaultParNames[par]).replace(" ", "_")
+        parameters[par]['type'] = cols[1].selectbox("Parameter Type",
+                                                    ("Float", "Integer", "Categorical"), key=f"cat{1+par}")
         if parameters[par]['type'] != "Categorical":
             low = cols[2].number_input("Low", value=-1., key=f"low{1+par}")
             high = cols[3].number_input("High", value=1., key=f"high{1+par}")
-            other = cols[4].text_input("""Intermediate values""", value="", key=f"other{1+par}", help="**Optional:** specify intermediate values (comma separated) between `Low` and `High` (only useful for Factorial designs) or Box-Behnken design (for which at least one intermediate value is required).")
+            other = cols[4].text_input("""Intermediate values""", value="",
+                                       key=f"other{1+par}", help="**Optional:** specify intermediate values (comma separated) between `Low` and `High` (only useful for Factorial designs) or Box-Behnken design (for which at least one intermediate value is required).")
             other = [float(item) for item in other.split(",") if item]
             parameters[par]['values'] = np.array([low] + other + [high])
         else:
-            other = cols[2].text_input("""Values (comma separated)""", value="A,B", key=f"other{1+par}")
+            other = cols[2].text_input(
+                """Values (comma separated)""", value="A,B", key=f"other{1+par}")
             parameters[par]['values'] = other.split(",")
 
 
-if design_type in ['Sobol sequence', 'Space Filling Latin Hypercube', 
+if design_type in ['Sobol sequence', 'Space Filling Latin Hypercube',
                    'Randomized Latin Hypercube', 'Optimal']:
-    mymin = 1 if design_type!='Optimal' else minexp
+    mymin = 1 if design_type != 'Optimal' else minexp
     Nexp = st.sidebar.number_input("Number of experiments:",
-                                    min_value=mymin, max_value=1000, value = 10)
-    rseed = st.sidebar.number_input("Random seed (for reproducibility):", 
+                                   min_value=mymin, max_value=1000, value=10)
+    rseed = st.sidebar.number_input("Random seed (for reproducibility):",
                                     min_value=0, value=42)
     feature_constraints = st.sidebar.text_input("""Add **linear** constraints on the features (if any). Use a comma to separate multiple constraints.""",
-                help="""The constraints should be in the form of inequalities such as:
+                                                help="""The constraints should be in the form of inequalities such as:
 
 - `x1 >= 0`
 - `x2 <= 10, x4 >= -0.5`
 - `x1 + 3*x2 <= 5`""")
-    if len(feature_constraints)>0:
+    if len(feature_constraints) > 0:
         feature_constraints = feature_constraints.replace("+", " + ")
         feature_constraints = feature_constraints.replace("<", "<=")
         feature_constraints = feature_constraints.replace(">", ">=")
@@ -310,25 +318,29 @@ if design_type in ['Sobol sequence', 'Space Filling Latin Hypercube',
     else:
         feature_constraints = []
     # check that the constraints are valid
-    for i,constraint in enumerate(feature_constraints):
-        # simple check: each constraint should contain at 
+    for i, constraint in enumerate(feature_constraints):
+        # simple check: each constraint should contain at
         # least one parameter name that is among the defined parameters
         # and not contain invalid parameter names
         constraint = re.findall(r'[a-zA-Z][a-zA-Z0-9]*', constraint)
         invalid_consts = []
         for const in constraint:
             if const not in [parameters[par]['name'] for par in range(Npars)]:
-                st.error(f"Constraint '{const}' is invalid: no matching parameter name found. The constraint will be ignored.")
+                st.error(
+                    f"Constraint '{const}' is invalid: no matching parameter name found. The constraint will be ignored.")
                 invalid_consts.append(i)
-        if len(invalid_consts)>0:
-            feature_constraints = [c for j,c in enumerate(feature_constraints) if j not in invalid_consts]
-elif design_type=='Fractional Factorial':
-    reduction = st.sidebar.number_input("Reduction:", min_value=2, max_value=Npars+1, value=2)
-elif design_type=='Central Composite':
+        if len(invalid_consts) > 0:
+            feature_constraints = [c for j, c in enumerate(
+                feature_constraints) if j not in invalid_consts]
+elif design_type == 'Fractional Factorial':
+    reduction = st.sidebar.number_input(
+        "Reduction:", min_value=2, max_value=Npars+1, value=2)
+elif design_type == 'Central Composite':
     center = st.sidebar.slider("Number of replications of the center point:",
-            value=1, min_value=0, max_value=10, step=1)
+                               value=1, min_value=0, max_value=10, step=1)
     center = (0, center)
-    face = st.sidebar.selectbox("Type of design:", ['Circumscribed', 'Inscribed', 'Faced'])
+    face = st.sidebar.selectbox(
+        "Type of design:", ['Circumscribed', 'Inscribed', 'Faced'])
     if face == 'Circumscribed':
         face = 'ccc'
     elif face == 'Inscribed':
@@ -346,35 +358,35 @@ elif design_type=='Central Composite':
             parameters[par]['values'] = parameters[par]['values'].tolist()
 
 doe = DesignOfExperiments(
-    type                = design_type,
-    parameters          = parameters,
-    Nexp                = Nexp,
-    reduction           = reduction,
-    order               = order,
-    randomize           = randomize,
-    feature_constraints = feature_constraints,
-    center              = center,
-    alpha               = alpha,
-    face                = face,
-    seed                = rseed
+    type=design_type,
+    parameters=parameters,
+    Nexp=Nexp,
+    reduction=reduction,
+    order=order,
+    randomize=randomize,
+    feature_constraints=feature_constraints,
+    center=center,
+    alpha=alpha,
+    face=face,
+    seed=rseed
 )
 design = doe.design
 
-# # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # #
 
 with tab3:
     # add an empty "response" column to the design
     design['response'] = ''
     timestamp = datetime.today().strftime('%Y-%m-%d_%H:%M:%S')
     outfile = writeout(design)
-    cols= st.columns([4,1,1,2])
+    cols = st.columns([4, 1, 1, 2])
     cols[0].write(f"Download Experimental Design with {len(design)} runs:")
     cols[1].download_button(
-        label     = f"CSV",
-        data      = outfile,
-        file_name = f'DOE_{timestamp}.csv',
-        mime      = 'text/csv',
-        key       = 'download-csv'
+        label=f"CSV",
+        data=outfile,
+        file_name=f'DOE_{timestamp}.csv',
+        mime='text/csv',
+        key='download-csv'
     )
     buffer = BytesIO()
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
@@ -395,4 +407,4 @@ with tab3:
     count = 0
     if len(design.values) > 0:
         for i in range(len(figs)):
-            cols[i%2].plotly_chart(figs[i], use_container_width=True)
+            cols[i % 2].plotly_chart(figs[i], use_container_width=True)

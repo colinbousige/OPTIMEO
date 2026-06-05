@@ -4,7 +4,7 @@
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the MIT License as published by
 # the Free Software Foundation, either version 3 of the License, or
-# any later version. 
+# any later version.
 
 import streamlit as st
 import numpy as np
@@ -19,8 +19,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from scipy.stats import t
 
-st.set_page_config(page_title="Data Analysis and Modeling", 
-                   page_icon=resource_path("icon.png"), 
+st.set_page_config(page_title="Data Analysis and Modeling",
+                   page_icon=resource_path("icon.png"),
                    layout="wide", menu_items=about_items)
 
 style = read_markdown_file(resource_path("style.css"))
@@ -38,7 +38,8 @@ if not 'figlin' in st.session_state:
     st.session_state.figlin = None
 if "model_up_to_date" not in st.session_state:
     st.session_state['model_up_to_date'] = False
-    
+
+
 def data_changed():
     st.session_state.analysis = None
     st.session_state.figml = None
@@ -46,30 +47,35 @@ def data_changed():
     st.session_state.modlin = None
     st.session_state.figlin = None
 
+
 def recompute_ML_fig():
     st.session_state.figml = None
+
 
 def model_updated():
     st.session_state.model_up_to_date = True
 
+
 def model_changed():
     st.session_state.model_up_to_date = False
 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Definition of User Interface
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 st.write("""
 # Data Analysis and Modeling
 """)
 
-tabs = st.tabs(["Data Loading", "Visual Assessment", "Linear Regression Model", 'Machine Learning Model'])
+tabs = st.tabs(["Data Loading", "Visual Assessment",
+               "Linear Regression Model", 'Machine Learning Model'])
 
-with tabs[0]: # data loading
+with tabs[0]:  # data loading
     data = load_data_widget()
     if data is None:
         cont = st.container(border=True)
         cont.markdown(
-        """##### How to format your data?
+            """##### How to format your data?
         
 The data must be in tidy format, meaning that each column is a variable and each row is an observation. We usually place the factors in the first columns and the response(s) in the last column(s). Data type can be float, integer, or text, and you can only specify one response. Spaces and special characters in the column names will be automatically removed. The first row of the file will be used as the header.
 
@@ -77,22 +83,23 @@ For Excel-like files, the first sheet will be used, and data should start in the
 
 """
         )
-        conti = cont.columns([1,2,1])
-        conti[1].image(resource_path("tidy_data.jpg"), caption="Example of tidy data format.")
+        conti = cont.columns([1, 2, 1])
+        conti[1].image(resource_path("tidy_data.jpg"),
+                       caption="Example of tidy data format.")
     if data is not None:
-        left,right=st.columns([1,1])
+        left, right = st.columns([1, 1])
         data = clean_names(data, remove_special=True, case_type='preserve')
         cols = data.columns.to_numpy()
         st.dataframe(data, hide_index=False)
         mincol = 1 if 'run_order' in cols else 0
-        factors = left.multiselect("Select the **parameter(s)** columns:", 
-                data.columns, default=cols[mincol:-1], on_change=data_changed)
+        factors = left.multiselect("Select the **parameter(s)** columns:",
+                                   data.columns, default=cols[mincol:-1], on_change=data_changed)
         # response cannot be a factor, so default are all unselected columns in factor
         available = [col for col in cols if col not in factors]
-        response = [right.selectbox("Select the **outcome** column:", 
-                available, index=len(available)-1, 
-                on_change=data_changed,
-                help="""The outcome is the response variable that you want to model. 
+        response = [right.selectbox("Select the **outcome** column:",
+                                    available, index=len(available)-1,
+                                    on_change=data_changed,
+                                    help="""The outcome is the response variable that you want to model. 
 
 **Only one outcome is supported for now**"""),
                     ]
@@ -109,7 +116,7 @@ For Excel-like files, the first sheet will be used, and data should start in the
 
 ⚠️   '''.join(messages.values())
             placeholder.error(message)
-            for name,messsage in messages.items():
+            for name, messsage in messages.items():
                 # drop factors[name]
                 factors.remove(name)
         dataclean = data[factors+[response]].copy()
@@ -118,7 +125,7 @@ For Excel-like files, the first sheet will be used, and data should start in the
         encoders = st.session_state.analysis.encoders
 
 
-with tabs[1]: # visual assessment
+with tabs[1]:  # visual assessment
     if data is None:
         st.warning("""The data is not yet loaded. Please upload a data file in the **Sidebar** and select the features and response in the **Data Loading** tab.""")
     if data is not None and len(factors) > 0 and len(response) > 0:
@@ -142,22 +149,22 @@ with tabs[1]: # visual assessment
         # Scatter Plot of Response Values
         fig = st.session_state.analysis.plot_scatter_response()
         cols[3].plotly_chart(fig, key="scatter_response")
-        
+
         st.write("---")
         cols = st.columns(2)
         fig = st.session_state.analysis.plot_corr()
         cols[0].plotly_chart(fig, key="correlation")
-        
+
         fig = st.session_state.analysis.plot_pairplot_plotly()
         cols[1].plotly_chart(fig, key="pairplot")
 
         # Scatter Plots for Each Factor
-        st.write("---\n##### Polynomial fits")        
+        st.write("---\n##### Polynomial fits")
         cols = st.columns(ncols)
         for i, factor in enumerate(factors):
-            fig = px.scatter(x=dataclean[factor], 
-                             y=dataclean[response], 
-                             labels={'x': factor, 'y': response}, 
+            fig = px.scatter(x=dataclean[factor],
+                             y=dataclean[response],
+                             labels={'x': factor, 'y': response},
                              title=f'{response} vs {factor}')
             fig.update_layout(
                 plot_bgcolor="white",  # White background
@@ -185,7 +192,7 @@ with tabs[1]: # visual assessment
                 ),
             )
             fitorder = cols[i % ncols].number_input(f"Order for {response} vs {factor}:",
-                                        min_value=0, value=2, max_value=10, step=1)
+                                                    min_value=0, value=2, max_value=10, step=1)
             # Add linear regression with red line and equation
             if dtypes[factor] != 'object':
                 x_data = dataclean[factor]
@@ -193,8 +200,10 @@ with tabs[1]: # visual assessment
                 valid_indices = x_data.notna() & y_data.notna()
                 x_clean = x_data[valid_indices]
                 y_clean = y_data[valid_indices]
-                p = np.polyfit(dataclean[factor], dataclean[response], fitorder)
-                x_range = np.linspace(np.min(dataclean[factor]), np.max(dataclean[factor]), 100)
+                p = np.polyfit(dataclean[factor],
+                               dataclean[response], fitorder)
+                x_range = np.linspace(
+                    np.min(dataclean[factor]), np.max(dataclean[factor]), 100)
                 y_pred = np.polyval(p, x_range)
                 # Standard error of estimate
                 y_fit = np.polyval(p, x_clean)
@@ -205,23 +214,25 @@ with tabs[1]: # visual assessment
                 mean_x = np.mean(x_clean)
                 t_val = t.ppf(0.975, dof)  # 95% confidence
 
-                se_line = residual_std_error * np.sqrt(1/len(x_clean) + (x_range - mean_x)**2 / np.sum((x_clean - mean_x)**2))
+                se_line = residual_std_error * \
+                    np.sqrt(1/len(x_clean) + (x_range - mean_x)
+                            ** 2 / np.sum((x_clean - mean_x)**2))
                 y_upper = y_pred + t_val * se_line
                 y_lower = y_pred - t_val * se_line
-                
-                fig.add_trace(go.Scatter(x=x_range, y=y_pred, 
-                                         mode='lines', 
-                                         name='Polynomial Fit', 
+
+                fig.add_trace(go.Scatter(x=x_range, y=y_pred,
+                                         mode='lines',
+                                         name='Polynomial Fit',
                                          line=dict(color='red')))
                 fig.add_trace(go.Scatter(
-                                    x=np.concatenate([x_range, x_range[::-1]]),
-                                    y=np.concatenate([y_upper, y_lower[::-1]]),
-                                    fill='toself',
-                                    fillcolor='rgba(255, 0, 0, 0.2)',
-                                    line=dict(color='rgba(255, 0, 0, 0)'),
-                                    showlegend=False
-                                    )
-                              )
+                    x=np.concatenate([x_range, x_range[::-1]]),
+                    y=np.concatenate([y_upper, y_lower[::-1]]),
+                    fill='toself',
+                    fillcolor='rgba(255, 0, 0, 0.2)',
+                    line=dict(color='rgba(255, 0, 0, 0)'),
+                    showlegend=False
+                )
+                )
                 fig.update_layout(title_subtitle_text=rf'{write_poly(p)}',
                                   title_subtitle_font_size=16,
                                   showlegend=False, height=400)
@@ -229,14 +240,14 @@ with tabs[1]: # visual assessment
             cols[i % ncols].plotly_chart(fig)
 
 
-with tabs[2]: # simple model
+with tabs[2]:  # simple model
     if data is None:
         st.warning("""The data is not yet loaded. Please upload a data file in the **Sidebar** and select the features and response in the **Data Loading** tab.""")
     if data is not None and len(factors) > 0 and len(response) > 0:
-        cols = st.columns([1,1,4])
-        order = cols[0].number_input("Interactions order:", 
-                                        min_value=1, value=1, 
-                                        max_value=min([4,len(factors)]))
+        cols = st.columns([1, 1, 4])
+        order = cols[0].number_input("Interactions order:",
+                                     min_value=1, value=1,
+                                     max_value=min([4, len(factors)]))
         quadratic = cols[1].multiselect("Quadratic terms?", factors)
         def_eqn = st.session_state.analysis.write_equation(order, quadratic)
         st.session_state.analysis.equation = cols[2].text_input("Model equation:", key="eqn", value=def_eqn, help="""Interactions are written as `factor1:factor2`.  
@@ -254,22 +265,26 @@ To remove the intercept, add `-1` at the end of the equation.""")
             cols = st.columns([1, 1])
             cols[0].plotly_chart(st.session_state.figlin[0])
             cols[1].plotly_chart(st.session_state.figlin[1])
-            # # # # # # # # # # # # # # # 
-            st.write("##### Predict the response for a set of factors with this linear model:")
+            # # # # # # # # # # # # # # #
+            st.write(
+                "##### Predict the response for a set of factors with this linear model:")
             Xnew = {factor: 0 for factor in factors}
             left, right = st.columns(2)
-            for i,factor in enumerate(factors):
+            for i, factor in enumerate(factors):
                 colsinput = left.columns(2)
-                colsinput[0].write(f"<p style='text-align:right;font-size:1.1em'><b>{factor}</b></p>", unsafe_allow_html=True)
+                colsinput[0].write(
+                    f"<p style='text-align:right;font-size:1.1em'><b>{factor}</b></p>", unsafe_allow_html=True)
                 if dtypes[factor] == 'object':
                     # non encoded factor
-                    possible = np.unique(encoders[factor].inverse_transform(dataclean[factor].values))
-                    Xnew[factor] = str(colsinput[1].selectbox(f"{factor}", possible, key=f"{factor}lm", label_visibility='collapsed'))
+                    possible = np.unique(
+                        encoders[factor].inverse_transform(dataclean[factor].values))
+                    Xnew[factor] = str(colsinput[1].selectbox(
+                        f"{factor}", possible, key=f"{factor}lm", label_visibility='collapsed'))
                 else:
-                    Xnew[factor] = colsinput[1].number_input(f"{factor}", 
-                                                value=np.mean(dataclean[factor]), key=f"{factor}lm", label_visibility='collapsed')
+                    Xnew[factor] = colsinput[1].number_input(f"{factor}",
+                                                             value=np.mean(dataclean[factor]), key=f"{factor}lm", label_visibility='collapsed')
             # encode the factors if they are categorical
-            for i,factor in enumerate(factors):
+            for i, factor in enumerate(factors):
                 if dtypes[factor] == 'object':
                     toencode = Xnew[factor]
                     Xnew[factor] = encoders[factor].transform([toencode])[0]
@@ -293,12 +308,12 @@ To remove the intercept, add `-1` at the end of the equation.""")
         st.write("")
         st.write("")
 
-with tabs[3]: # machine learning model
+with tabs[3]:  # machine learning model
     if data is None:
         st.warning("""The data is not yet loaded. Please upload a data file in the **Sidebar** and select the features and response in the **Data Loading** tab.""")
     if data is not None and len(factors) > 0 and len(response) > 0:
         # Choose machine learning model
-        cols = st.columns([2,3])
+        cols = st.columns([2, 3])
         with cols[0].expander("**How to choose the ML model?**"):
             st.write("""In the **Visual Assessment** tab, you can take a look at your data and make a pairplot out of it. This can help you in model selection:
 
@@ -331,21 +346,21 @@ with tabs[3]: # machine learning model
             ''')
         cols[1].write("###### Machine Learning Model")
         colss = cols[1].columns(2)
-        model_sel = colss[0].selectbox("Select the machine learning model:", 
-                ["ElasticNetCV", "RidgeCV", "LinearRegression", 
-                 "RandomForest", "GaussianProcess", "GradientBoosting"],
-                on_change=model_changed)
-        split_size = colss[0].number_input("Validation set size:", 
-                                             min_value=0.0, value=0.2,
-                                             max_value=1., step=.1, 
-                                             on_change=model_changed)
-        features_in_log = colss[0].toggle("Log scale for features importance", 
-                                          value=True, 
+        model_sel = colss[0].selectbox("Select the machine learning model:",
+                                       ["ElasticNetCV", "RidgeCV", "LinearRegression",
+                                        "RandomForest", "GaussianProcess", "GradientBoosting"],
+                                       on_change=model_changed)
+        split_size = colss[0].number_input("Validation set size:",
+                                           min_value=0.0, value=0.2,
+                                           max_value=1., step=.1,
+                                           on_change=model_changed)
+        features_in_log = colss[0].toggle("Log scale for features importance",
+                                          value=True,
                                           on_change=model_changed)
-        kwargs = colss[1].text_area('Additional parameters for the model (optional):', 
-            value='{}', height=68,
-            on_change=model_changed, 
-            help="""You can add additional parameters for the model in the form of a dictionary. 
+        kwargs = colss[1].text_area('Additional parameters for the model (optional):',
+                                    value='{}', height=68,
+                                    on_change=model_changed,
+                                    help="""You can add additional parameters for the model in the form of a dictionary. 
 Default parameters will be used if you do not specify them, they are:
 - **[ElasticNetCV](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.ElasticNetCV.html)**: 
     - `{"l1_ratio": [0.1, 0.5, 0.7, 0.9, 0.95, 0.99, 1.0], "cv": 5, "max_iter": 1000}`
@@ -366,19 +381,21 @@ Default parameters will be used if you do not specify them, they are:
                 st.error(f"Error in evaluating the additional parameters: {e}")
                 kwargs = {}
         if kwargs != {} and not isinstance(kwargs, dict):
-            st.error("The additional parameters must be in the form of a dictionary.")
+            st.error(
+                "The additional parameters must be in the form of a dictionary.")
             kwargs = {}
         # colss[1].write("")
         if colss[1].button("Compute the machine learning model and plot the results",
-                          disabled=st.session_state['model_up_to_date'],
-                          on_click=model_updated,
-                          type="primary"):
+                           disabled=st.session_state['model_up_to_date'],
+                           on_click=model_updated,
+                           type="primary"):
             st.session_state.analysis.model_type = model_sel
             st.session_state.analysis.split_size = split_size
             st.session_state.analysis.compute_ML_model(**kwargs)
             st.session_state.modml = st.session_state.analysis.model
-            st.session_state.figml = st.session_state.analysis.plot_ML_model(features_in_log)
-        
+            st.session_state.figml = st.session_state.analysis.plot_ML_model(
+                features_in_log)
+
         if st.session_state.figml is not None:
             # Make plot of predicted vs actual
             cols = st.columns([1, 1])
@@ -386,22 +403,27 @@ Default parameters will be used if you do not specify them, they are:
             if st.session_state.figml[1] is not None:
                 cols[1].plotly_chart(st.session_state.figml[1])
             else:
-                cols[1].warning(f"The {model_sel} model does not support feature importance.")
+                cols[1].warning(
+                    f"The {model_sel} model does not support feature importance.")
 
-            st.write(f"##### Predict the response for a set of factors with this {model_sel} model:")
+            st.write(
+                f"##### Predict the response for a set of factors with this {model_sel} model:")
 
             Xnew = []
             left, right = st.columns(2)
             for i, factor in enumerate(factors):
                 colsinput = left.columns(2)
-                colsinput[0].write(f"<p style='text-align:right;font-size:1.1em'><b>{factor}</b></p>", unsafe_allow_html=True)
+                colsinput[0].write(
+                    f"<p style='text-align:right;font-size:1.1em'><b>{factor}</b></p>", unsafe_allow_html=True)
                 if dtypes[factor] == 'object':
                     # Non-encoded factor
-                    possible = np.unique(encoders[factor].inverse_transform(dataclean[factor].values))
-                    Xnew.append(str(colsinput[1].selectbox(f"{factor}", possible, key=f"{factor}ml", label_visibility='collapsed')))
+                    possible = np.unique(
+                        encoders[factor].inverse_transform(dataclean[factor].values))
+                    Xnew.append(str(colsinput[1].selectbox(
+                        f"{factor}", possible, key=f"{factor}ml", label_visibility='collapsed')))
                 else:
                     Xnew.append(colsinput[1].number_input(f"{factor}",
-                                                        value=np.mean(dataclean[factor]), key=f"{factor}ml", label_visibility='collapsed'))
+                                                          value=np.mean(dataclean[factor]), key=f"{factor}ml", label_visibility='collapsed'))
 
             # Encode the factors if they are categorical
             for i, factor in enumerate(factors):
@@ -424,7 +446,8 @@ Default parameters will be used if you do not specify them, they are:
 
                 # Add intercept if needed
                 if hasattr(st.session_state.modml, 'fit_intercept') and st.session_state.modml.fit_intercept:
-                    X_train_with_intercept = np.hstack([np.ones((X_train.shape[0], 1)), X_train])
+                    X_train_with_intercept = np.hstack(
+                        [np.ones((X_train.shape[0], 1)), X_train])
                 else:
                     X_train_with_intercept = X_train
 
@@ -434,13 +457,17 @@ Default parameters will be used if you do not specify them, they are:
                 else:
                     # For RidgeCV and ElasticNetCV, we need to estimate the covariance matrix
                     # This is a simplified approach; for a more accurate estimate, consider using the MSE and the regularization
-                    residuals = y_train - st.session_state.modml.predict(X_train)
+                    residuals = y_train - \
+                        st.session_state.modml.predict(X_train)
                     mse = np.mean(residuals**2)
-                    cov_matrix = mse * np.linalg.inv(X_train_with_intercept.T @ X_train_with_intercept)
+                    cov_matrix = mse * \
+                        np.linalg.inv(X_train_with_intercept.T @
+                                      X_train_with_intercept)
 
                 # Add intercept to Xnew if needed
                 if hasattr(st.session_state.modml, 'fit_intercept') and st.session_state.modml.fit_intercept:
-                    Xnew_with_intercept = np.hstack([np.ones((Xnew.shape[0], 1)), Xnew])
+                    Xnew_with_intercept = np.hstack(
+                        [np.ones((Xnew.shape[0], 1)), Xnew])
                 else:
                     Xnew_with_intercept = Xnew
 
@@ -449,7 +476,8 @@ Default parameters will be used if you do not specify them, they are:
                 stderr = np.sqrt(var_pred)[0, 0]
 
             elif model_sel == "GaussianProcess":
-                _, stderr = st.session_state.modml.predict(Xnew, return_std=True)
+                _, stderr = st.session_state.modml.predict(
+                    Xnew, return_std=True)
 
             else:
                 # For non-linear models, use bootstrapping
@@ -464,16 +492,17 @@ Default parameters will be used if you do not specify them, they are:
                     X_train, X_test, y_train, y_test = X, X, y, y
 
                 for _ in range(n_bootstraps):
-                    indices = np.random.choice(len(X_train), size=len(X_train), replace=True)
+                    indices = np.random.choice(
+                        len(X_train), size=len(X_train), replace=True)
                     # Use .iloc for integer-location based indexing
                     X_resampled = X_train.iloc[indices]
                     y_resampled = y_train.iloc[indices]
-                    
+
                     if model_sel == "RandomForest":
                         model = RandomForestRegressor(**kwargs)
                     elif model_sel == "GradientBoosting":
                         model = GradientBoostingRegressor(**kwargs)
-                    
+
                     model.fit(X_resampled, y_resampled)
                     bootstrap_predictions.append(model.predict(Xnew)[0])
 

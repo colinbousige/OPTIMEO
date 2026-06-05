@@ -6,7 +6,7 @@ from resources.functions import about_items
 
 st.set_page_config(
     page_title="OPTIMEO",
-  page_icon=resource_path("icon.png"),
+    page_icon=resource_path("icon.png"),
     layout="wide",
     initial_sidebar_state="expanded",
     menu_items=about_items
@@ -15,9 +15,10 @@ st.set_page_config(
 style = read_markdown_file(resource_path("style.css"))
 st.markdown(style, unsafe_allow_html=True)
 
-cols=st.columns([4,1])
+cols = st.columns([4, 1])
 cols[0].title("OPTIMEO")
-cols[0].subheader("Bayesian Optimization Web App for Process Tuning, Modeling, and Orchestration")
+cols[0].subheader(
+    "Bayesian Optimization Web App for Process Tuning, Modeling, and Orchestration")
 cols[1].write('')
 cols[1].write('')
 cols[1].image(resource_path("logo.png"), width=200)
@@ -148,4 +149,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 
 """, unsafe_allow_html=True)
-

@@ -4,7 +4,7 @@
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the MIT License as published by
 # the Free Software Foundation, either version 3 of the License, or
-# any later version. 
+# any later version.
 
 """
 This module provides a class for creating and visualizing a design of experiments (DoE).
@@ -16,25 +16,26 @@ You can see an example notebook [here](../examples/doe.ipynb).
 """
 
 
+import random
+import plotly.graph_objects as go
+from itertools import combinations
+import plotly.express as px
+import definitive_screening_design as dsd
+from pyDOE3 import *
+from sklearn.preprocessing import LabelEncoder
+from doepy import build
+from dexpy.design import coded_to_actual
+from dexpy.model import ModelOrder
+from dexpy.optimal import build_optimal
+from typing import Any, Dict, List, Optional
+import pandas as pd
+import numpy as np
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 warnings.simplefilter(action='ignore', category=DeprecationWarning)
 warnings.simplefilter(action='ignore', category=UserWarning)
 warnings.simplefilter(action='ignore', category=RuntimeError)
-import numpy as np
-import pandas as pd
-from typing import Any, Dict, List, Optional
-from dexpy.optimal import build_optimal
-from dexpy.model import ModelOrder
-from dexpy.design import coded_to_actual
-from doepy import build
-from sklearn.preprocessing import LabelEncoder
-from pyDOE3 import *
-import definitive_screening_design as dsd
-import plotly.express as px
-from itertools import combinations
-import plotly.graph_objects as go
-import random
+
 
 class DesignOfExperiments:
     """
@@ -65,7 +66,7 @@ class DesignOfExperiments:
 
     Parameters
     ----------
-    
+
     type : str
         The type of design to create. Must be one of:
         `'Full Factorial'`, `'Sobol sequence'`, `'Fractional Factorial'`,
@@ -93,10 +94,10 @@ class DesignOfExperiments:
         If a string is provided, it will be converted to a list with one element.
         If a list is provided, it will be used as is.
         If None, no constraints will be applied.
-    
+
     Attributes
     ----------
-    
+
     type : str
         The type of design.
     parameters : List[Dict[str, Dict[str, Any]]]
@@ -115,7 +116,7 @@ class DesignOfExperiments:
         Lower bounds for the parameters.
     highs : Dict[str, float]
         Upper bounds for the parameters.
-    
+
     Methods
     -------
     create_design()
@@ -125,17 +126,17 @@ class DesignOfExperiments:
 
     """
 
-    def __init__(self, 
+    def __init__(self,
                  type: str,
                  parameters: List[Dict[str, Dict[str, Any]]],
-                 Nexp: int = 4, 
-                 order: int = 2, 
-                 randomize: bool = True, 
+                 Nexp: int = 4,
+                 order: int = 2,
+                 randomize: bool = True,
                  reduction: int = 2,
                  feature_constraints: Optional[List[Dict[str, Any]]] = None,
-                 center=(2,2),
+                 center=(2, 2),
                  alpha='o',
-                 face='ccc', 
+                 face='ccc',
                  seed: int = 42):
         self.type = type
         self.parameters = parameters
@@ -231,12 +232,12 @@ class DesignOfExperiments:
     def order(self) -> int:
         """Order of the model (for `'Optimal'` design). Default is `2`."""
         return self._order
-    
+
     @property
     def center(self) -> tuple:
         """Center for the Central Composite Design. Must be a tuple of two values."""
         return self._center
-    
+
     @center.setter
     def center(self, value: tuple):
         """Set the center of the design."""
@@ -247,26 +248,27 @@ class DesignOfExperiments:
         if not all(isinstance(i, (int, float)) for i in value):
             raise ValueError("Center must be a tuple of two numeric values.")
         self._center = value
-    
+
     @property
     def alpha(self) -> str:
         """Alpha for the Central Composite Design. Default is `'o'` (orthogonal).
         Can be either `'o'` or `'r'` (rotatable)."""
         return self._alpha
-    
+
     @alpha.setter
     def alpha(self, value: str):
         """Set the alpha of the design."""
         if value not in ['o', 'r']:
-            raise ValueError("Alpha must be either 'o' (orthogonal) or 'r' (rotatable).")
+            raise ValueError(
+                "Alpha must be either 'o' (orthogonal) or 'r' (rotatable).")
         self._alpha = value
-    
+
     @property
     def face(self) -> str:
         """The relation between the start points and the corner (factorial) points for the Central Composite Design.
-        
+
         There are three possible options for this input:
-        
+
         1. 'circumscribed' or 'ccc' (Default)
         2. 'inscribed' or 'cci'
         3. 'faced' or 'ccf'"""
@@ -276,24 +278,25 @@ class DesignOfExperiments:
     def face(self, value: str):
         """Set the face of the design."""
         if value not in ['ccc', 'cci', 'ccf']:
-            raise ValueError("Face must be either 'ccc' (circumscribed), 'cci' (inscribed), or 'ccf' (faced).")
+            raise ValueError(
+                "Face must be either 'ccc' (circumscribed), 'cci' (inscribed), or 'ccf' (faced).")
         self._face = value
-    
+
     @property
     def lows(self) -> Dict[str, float]:
         """Get the lower bounds for the parameters."""
         return self._lows
-    
+
     @lows.setter
     def lows(self, value: Dict[str, float]):
         """Set the lower bounds for the parameters."""
         self._lows = value
-    
+
     @property
     def highs(self) -> Dict[str, float]:
         """Get the upper bounds for the parameters."""
         return self._highs
-    
+
     @highs.setter
     def highs(self, value: Dict[str, float]):
         """Set the upper bounds for the parameters."""
@@ -333,7 +336,7 @@ class DesignOfExperiments:
     def design(self, value: pd.DataFrame):
         """Set the design DataFrame."""
         self._design = value
-    
+
     @property
     def feature_constraints(self):
         """
@@ -355,9 +358,9 @@ class DesignOfExperiments:
         else:
             self._feature_constraints = None
 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     def create_design(self):
         """
@@ -433,11 +436,11 @@ class DesignOfExperiments:
             trials = ax_client.get_trials_data_frame()
             self.design = trials[trials['trial_status'] == 'CANDIDATE']
             self.design = self._design.drop(columns=['trial_index',
-                                                      'trial_status',
-                                                      'arm_name',
-                                                      'generation_method',
-                                                      'generation_node'],
-                                           errors='ignore')
+                                                     'trial_status',
+                                                     'arm_name',
+                                                     'generation_method',
+                                                     'generation_node'],
+                                            errors='ignore')
         elif self.type == 'Fractional Factorial':
             for par in range(len(self.parameters)):
                 if self.parameters[par]['type'] == "Numerical":
@@ -446,10 +449,13 @@ class DesignOfExperiments:
                     label = le.fit_transform(self.parameters[par]['values'])
                     self.parameters[par]['values'] = label
                     self.parameters[par]['encoder'] = le
-            design = gsd([len(par['values']) for par in self.parameters], self.reduction)
-            self.design = pd.DataFrame(design, columns=[par['name'] for par in self.parameters])
+            design = gsd([len(par['values'])
+                         for par in self.parameters], self.reduction)
+            self.design = pd.DataFrame(
+                design, columns=[par['name'] for par in self.parameters])
         elif self.type == 'Definitive Screening':
-            params = {par['name']: [np.min(par['values']), np.max(par['values'])] for par in self.parameters}
+            params = {par['name']: [np.min(par['values']), np.max(
+                par['values'])] for par in self.parameters}
             self.design = dsd.generate(factors_dict=params)
         elif self.type == 'Space Filling Latin Hypercube':
             self.design = build.space_filling_lhs(pars, num_samples=self.Nexp)
@@ -461,17 +467,20 @@ class DesignOfExperiments:
                 order=ModelOrder(self.order),
                 run_count=self.Nexp)
             reaction_design.columns = [par['name'] for par in self.parameters]
-            self.design = coded_to_actual(reaction_design, self._lows, self._highs)
+            self.design = coded_to_actual(
+                reaction_design, self._lows, self._highs)
         elif self.type == 'Plackett-Burman':
             self.design = build.plackett_burman(pars)
         elif self.type == 'Box-Behnken':
             if len(self.parameters) < 3 or any([len(par['values']) < 3 for par in self.parameters]):
                 self.design = pd.DataFrame({})
-                raise Warning("Box-Behnken design is not possible with less than 3 parameters and with less than 3 levels for any parameter.")
+                raise Warning(
+                    "Box-Behnken design is not possible with less than 3 parameters and with less than 3 levels for any parameter.")
             else:
                 self.design = build.box_behnken(d=pars)
         elif self.type == 'Central Composite':
-            pars_list = {k: v.tolist() if hasattr(v, 'tolist') else list(v) for k, v in pars.items()}
+            pars_list = {k: v.tolist() if hasattr(v, 'tolist') else list(v)
+                         for k, v in pars.items()}
             self.design = build.central_composite(pars_list,
                                                   center=self.center,
                                                   alpha=self.alpha,
@@ -483,8 +492,10 @@ class DesignOfExperiments:
             if par['type'].lower() == "categorical" and self.type != 'Sobol sequence':
                 vals = self._design[par['name']].to_numpy()
                 n_classes = len(par['encoder'].classes_)
-                clipped = [int(np.clip(np.round(v), 0, n_classes - 1)) for v in vals]
-                self.design[par['name']] = par['encoder'].inverse_transform(clipped)
+                clipped = [int(np.clip(np.round(v), 0, n_classes - 1))
+                           for v in vals]
+                self.design[par['name']
+                            ] = par['encoder'].inverse_transform(clipped)
 
         # randomize the run order
         self.design['run_order'] = np.arange(len(self._design)) + 1
@@ -528,7 +539,8 @@ class DesignOfExperiments:
                                 x=facj['name'],
                                 y=faci['name'],
                                 title=f"""{faci['name']} vs {facj['name']}""",
-                                labels={facj['name']: facj['name'], faci['name']: faci['name']}
+                                labels={facj['name']: facj['name'],
+                                        faci['name']: faci['name']}
                             ))
                             fig[count].update_traces(marker=dict(size=10))
                             fig[count].update_layout(
@@ -577,4 +589,3 @@ class DesignOfExperiments:
                     )
                     count += 1
         return fig
-

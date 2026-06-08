@@ -25,6 +25,7 @@ cols[1].image(resource_path("logo.png"), width=200)
 st.markdown("""
 [![paper](https://joss.theoj.org/papers/5df5fbe4e131d230b13fb3c98db545d8/status.svg)](https://joss.theoj.org/papers/5df5fbe4e131d230b13fb3c98db545d8)
 <a href="https://doi.org/10.5281/zenodo.15308437"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.15308437.svg" alt="DOI"></a>
+[![PyPI - Version](https://img.shields.io/pypi/v/optimeo)](https://pypi.org/project/optimeo/)
 [![](https://badgen.net/badge/icon/GitHub?icon=github&label)](https://github.com/colinbousige/OPTIMEO)
 [![Documentation](https://github.com/colinbousige/OPTIMEO/actions/workflows/build-docs.yml/badge.svg)](https://colinbousige.github.io/OPTIMEO/)
 

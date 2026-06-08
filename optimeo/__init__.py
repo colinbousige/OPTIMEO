@@ -1,6 +1,6 @@
 """OPTIMEO: Bayesian optimization, design of experiments, and data analysis tools.
 
-[![PyPI version](https://img.shields.io/pypi/v/optimeo.svg)](https://pypi.org/project/optimeo/)
+[![PyPI - Version](https://img.shields.io/pypi/v/optimeo)](https://pypi.org/project/optimeo/)
 
 OPTIMEO helps scientists and engineers optimize experimental processes through:
 

@@ -1224,26 +1224,19 @@ Input data:
             self.set_model()
 
         def _style_sensitivity_figure(fig):
-            def _humanize_sensitivity_label(label):
-                if not isinstance(label, str) or "_OH_PARAM_" not in label:
-                    return label
+            import re as _re
 
-                match = re.match(
-                    r"^(?P<feature>.+)_OH_PARAM_(?P<index>\d+)$", label)
-                if match is None:
-                    return label
+            # Build lookup: full _OH_PARAM_N key → human-readable label
+            oh_label_map = {}
+            for name, info in self._features.items():
+                if info['type'] == 'text':
+                    for i, val in enumerate(info.get('range', [])):
+                        oh_label_map[f"{name}_OH_PARAM_{i}"] = f"{name}: {val}"
 
-                feature_name = match.group("feature")
-                category_index = int(match.group("index"))
-                feature_info = self._features.get(feature_name)
-                if feature_info is None:
-                    return label
-
-                category_values = feature_info.get("range", [])
-                if not isinstance(category_values, list) or category_index >= len(category_values):
-                    return feature_name
-
-                return f"{feature_name}: {category_values[category_index]}"
+            def resolve_label(raw):
+                if not isinstance(raw, str):
+                    return raw
+                return oh_label_map.get(raw, raw)
 
             for trace in fig.data:
                 trace_name = str(getattr(trace, "name", "") or "")
@@ -1252,27 +1245,42 @@ Input data:
                 elif "Decreases" in trace_name:
                     trace.marker.color = "#d62728"
 
-                # Keep bars centered on category rows for cleaner label alignment.
                 if getattr(trace, "type", None) == "bar":
                     trace.width = 0.85
                     trace.offsetgroup = None
                     trace.alignmentgroup = None
 
-                    y_values = getattr(trace, "y", None)
-                    if y_values is not None:
-                        trace.y = [_humanize_sensitivity_label(
-                            value) for value in y_values]
+                    # customdata[0] holds the FULL _OH_PARAM_N key (first pass)
+                    # or already-resolved label (second pass) — resolve either way
+                    cd = getattr(trace, "customdata", None)
+                    if cd is not None:
+                        cd_arr = np.array(cd, dtype=object)
+                        resolved_labels = []
+                        for ri in range(cd_arr.shape[0]):
+                            resolved = resolve_label(str(cd_arr[ri, 0]))
+                            cd_arr[ri, 0] = resolved
+                            resolved_labels.append(resolved)
+                        trace.customdata = cd_arr
+                        # Override trace.y with the resolved labels from customdata
+                        # (trace.y contains Ax's pre-truncated display strings — ignore them)
+                        trace.y = tuple(resolved_labels)
 
-                hovertemplate = getattr(trace, "hovertemplate", None)
-                if hovertemplate is not None:
-                    hovertemplate = hovertemplate.replace(
-                        "truncated_parameter_name=%{y}<br>", "")
-                    hovertemplate = hovertemplate.replace(
-                        "truncated_parameter_name=%{y}<br />", "")
-                    trace.hovertemplate = hovertemplate
+                    # Fix hovertemplate:
+                    # - remove the truncated_parameter_name=%{y} line (y is now resolved anyway)
+                    # - keep parameter_name pointing at customdata[0] which is now resolved
+                    ht = getattr(trace, "hovertemplate", None)
+                    if ht is not None:
+                        ht = ht.replace(
+                            "truncated_parameter_name=%{y}<br>", "")
+                        ht = ht.replace(
+                            "truncated_parameter_name=%{y}<br />", "")
+                        # if hovertemplate still uses %{y} for parameter_name, redirect to customdata
+                        ht = ht.replace(
+                            "parameter_name=%{y}", "parameter_name=%{customdata[0]}")
+                        trace.hovertemplate = ht
 
             fig.update_layout(barmode="overlay")
-            fig.update_yaxes(title_text="")
+            fig.update_yaxes(title_text="", automargin=True)
             fig.update_xaxes(title_text="Importance")
             return fig
 

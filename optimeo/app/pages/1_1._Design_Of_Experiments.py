@@ -102,7 +102,7 @@ with tab1:
         # Filter options for the left column
         num_factors = st.radio(
             "Number of factors:",
-            ["Any", "Few (2-5)", "Many` (6+)"]
+            ["Any", "Few (2-5)", "Many (6+)"]
         )
     with col2:
         factor_types = st.pills(

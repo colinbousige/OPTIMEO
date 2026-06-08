@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.3.3] - 2026-06-08
+
+### Fixed
+- Updated BO's feature analysis plot to better handle categorical variables by showing category names instead of one-hot feature labels, improving readability and interpretability.
+
 ## [1.3.2] - 2026-06-02
 
 ### Added

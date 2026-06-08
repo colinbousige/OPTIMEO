@@ -10,13 +10,13 @@ authors:
   - given-names: Colin
     family-names: Bousige
     email: colin.bousige@cnrs.fr
-    orcid: 'https://orcid.org/0000-0002-0490-2277'
+    orcid: "https://orcid.org/0000-0002-0490-2277"
     affiliation: >-
       Universite Claude Bernard Lyon 1, CNRS, LMI UMR 5615,
       Villeurbanne, F-69100, France
-repository-code: 'https://github.com/colinbousige/OPTIMEO'
-url: 'https://colinbousige.github.io/OPTIMEO/'
-doi: '10.5281/zenodo.15308437'
+repository-code: "https://github.com/colinbousige/OPTIMEO"
+url: "https://colinbousige.github.io/OPTIMEO/"
+doi: "10.5281/zenodo.15308437"
 abstract: >-
   OPTIMEO is a package doubled by a web application that
   helps you optimize your experimental process by generating
@@ -28,5 +28,5 @@ keywords:
   - design of experiment
   - active learning
 license: CC-BY-NC-4.0
-version: '1.3.2'
-date-released: '2026-06-02'
+version: "1.3.3"
+date-released: "2026-06-08"

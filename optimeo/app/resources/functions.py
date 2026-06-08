@@ -2,14 +2,14 @@
 # Contact: colin.bousige@cnrs.fr
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the Creative Commons Attribution-NonCommercial 
-# 4.0 International License. 
+# it under the terms of the Creative Commons Attribution-NonCommercial
+# 4.0 International License.
 
 
 import streamlit as st
 from pathlib import Path
 import sys
-from io import StringIO 
+from io import StringIO
 import pandas as pd
 import numpy as np
 from janitor import clean_names
@@ -30,16 +30,17 @@ import streamlit.components.v1 as components
 APP_DIR = Path(__file__).resolve().parents[1]
 RESOURCES_DIR = APP_DIR / "resources"
 
-about_items={
-        'Get Help': 'mailto:colin.bousige@cnrs.fr',
-        'Report a bug': "mailto:colin.bousige@cnrs.fr",
-        'About': """
-        ## OPTIMA
-    Version 1.3.2 (2026-06-02).
+about_items = {
+    'Get Help': 'mailto:colin.bousige@cnrs.fr',
+    'Report a bug': "mailto:colin.bousige@cnrs.fr",
+    'About': """
+        ## OPTIMEO
+    Version 1.3.3 (2026-06-08).
 
         This app was made by [Colin Bousige](https://lmi.cnrs.fr/author/colin-bousige/). Contact me for support, requests, or to signal a bug.
         """
-    }
+}
+
 
 def resolve_app_path(path_like):
     """Resolve app/resource paths robustly across local and Streamlit Cloud runs."""
@@ -64,18 +65,22 @@ def resolve_app_path(path_like):
 
     return candidates[-1]
 
+
 def resource_path(filename):
     """Return an absolute path to a file in optimeo/app/resources."""
     return str(resolve_app_path(Path("resources") / filename))
+
 
 def read_markdown_file(markdown_file):
     """Read a markdown/css file and return its content."""
     return resolve_app_path(markdown_file).read_text(encoding="utf-8")
 
+
 def writeout(df: pd.DataFrame, format='csv'):
     """Write a pd.DataFrame to csv. To use with st.download_button()"""
     df = clean_names(df)
     return df.to_csv(index=False).encode('utf-8')
+
 
 def write_poly(pp):
     signs = [np.sign(x) for x in pp]
@@ -85,12 +90,12 @@ def write_poly(pp):
     p = [x.replace(f'•10<sup>{0}</sup>', '') for x in p]
     out = "y = "
     order = len(p) - 1
-    for i,n in zip(range(len(p)), range(order, -1, -1)):
-        if i==0 and n>1:
+    for i, n in zip(range(len(p)), range(order, -1, -1)):
+        if i == 0 and n > 1:
             out += f"{p[0]}x<sup>{n}</sup>"
-        elif i==0 and n==1:
+        elif i == 0 and n == 1:
             out += f"{p[0]}x"
-        elif i==0 and n==0:
+        elif i == 0 and n == 0:
             out += f"{p[0]}"
         elif n == 1:
             out += f"{'' if signs[i]<0 else ' +'} {p[i]}x"
@@ -99,13 +104,16 @@ def write_poly(pp):
         else:
             out += f"{'' if signs[i]<0 else ' +'} {p[i]}x<sup>{n}</sup>"
     out = out.replace('-', '–')
-    return(out)
+    return (out)
+
 
 def display_figure(file_path):
     html_content = resolve_app_path(file_path).read_text(encoding="utf-8")
     components.html(html_content, height=800)
 
 # @st.cache_data
+
+
 def encode_data(data, factors, response, factor_ranges):
     """
     Read experimental data from a CSV file and format it into features and outcomes dictionaries.
@@ -138,7 +146,7 @@ def encode_data(data, factors, response, factor_ranges):
                     'type': 'text',
                     'data': [str(val) for val in features[column].tolist()],
                     'range': [str(val) for val in allowed_values]
-                    }
+                }
         elif 'int' in str(features[column].dtype):
             unique_values = features[column].unique()
             min_val = int(np.min(factor_ranges[column]))
@@ -148,7 +156,7 @@ def encode_data(data, factors, response, factor_ranges):
             elif min_val >= max_val:
                 message[column] = f"Invalid range for **{column}**: {min_val} >= {max_val}. This column will be removed from the features."
             # if data points are not in the range of the unique values, remove them
-            elif (any(val < min_val for val in unique_values) or 
+            elif (any(val < min_val for val in unique_values) or
                   any(val > max_val for val in unique_values)):
                 message[column] = f"Invalid range for **{column}**: some data points do not belong to the range [{min_val},{max_val}]. This column will be removed from the features."
             else:
@@ -156,7 +164,7 @@ def encode_data(data, factors, response, factor_ranges):
                     'type': 'int',
                     'data': [int(val) for val in features[column].tolist()],
                     'range': [min_val, max_val]
-                    }
+                }
         elif 'float' in str(features[column].dtype):
             unique_values = features[column].unique()
             min_val = float(np.min(factor_ranges[column]))
@@ -165,7 +173,7 @@ def encode_data(data, factors, response, factor_ranges):
                 message[column] = f"Only one unique value found in **{column}**. This column will be removed from the features."
             elif min_val >= max_val:
                 message[column] = f"Invalid range for **{column}**: {min_val} >= {max_val}. This column will be removed from the features."
-            elif (any(val < min_val for val in features[column]) or 
+            elif (any(val < min_val for val in features[column]) or
                   any(val > max_val for val in features[column])):
                 message[column] = f"Invalid range for **{column}**: some data points do not belong to the range [{min_val},{max_val}]. This column will be removed from the features."
             else:
@@ -173,7 +181,7 @@ def encode_data(data, factors, response, factor_ranges):
                     'type': 'float',
                     'data': [float(val) for val in features[column].tolist()],
                     'range': [min_val, max_val]
-                    } 
+                }
 
     # same for outcomes with just type and data
     formatted_outcomes = {}
@@ -191,6 +199,7 @@ def encode_data(data, factors, response, factor_ranges):
 
     return formatted_features, formatted_outcomes, message
 
+
 def encode_data2(data, factors):
     dtypes = data.dtypes
     encoders = {}
@@ -202,12 +211,15 @@ def encode_data2(data, factors):
     return data, encoders, dtypes
 
 # Function to check constraints
+
+
 def check_constraints(df, constraints):
     results = {}
     for constraint in constraints:
         # Evaluate the constraint as a boolean expression
         results[constraint] = df.eval(constraint)
     return results
+
 
 def check_ranges(ranges):
     """
@@ -228,34 +240,36 @@ def check_ranges(ranges):
     return message, invalid
 
 # @st.cache_data
-def update_model(features, outcomes, 
-                 factor_ranges, Nexp, maximize, 
-                 fixed_features, feature_constraints,outcome_constraints,
+
+
+def update_model(features, outcomes,
+                 factor_ranges, Nexp, maximize,
+                 fixed_features, feature_constraints, outcome_constraints,
                  sampler, acq_function, rseed):
     """
     Update the model if the parameters have changed.
     """
     # Check if the model is already in the session state
     # or if the parameters necessitating reinitializing the model have changed
-    if (st.session_state['bo'] is None or 
+    if (st.session_state['bo'] is None or
             # if these changed, a new model needs to be created
-            features != st.session_state['bo'].features or 
+            features != st.session_state['bo'].features or
             outcomes != st.session_state['bo'].outcomes or
-            factor_ranges != st.session_state['bo'].ranges or 
+            factor_ranges != st.session_state['bo'].ranges or
             maximize != st.session_state['bo'].maximize):
         st.session_state['bo'] = BOExperiment(
-            features            = features, 
-            outcomes            = outcomes,
-            ranges              = factor_ranges,
-            N                   = Nexp,
-            maximize            = maximize,
-            outcome_constraints = outcome_constraints,
-            fixed_features      = fixed_features,
-            feature_constraints = feature_constraints,
-            optim               = sampler,
-            acq_func            = acq_function,
-            seed                = rseed
-            )
+            features=features,
+            outcomes=outcomes,
+            ranges=factor_ranges,
+            N=Nexp,
+            maximize=maximize,
+            outcome_constraints=outcome_constraints,
+            fixed_features=fixed_features,
+            feature_constraints=feature_constraints,
+            optim=sampler,
+            acq_func=acq_function,
+            seed=rseed
+        )
     else:
         # see if parameters that just play on the generation have changed
         # N
@@ -275,7 +289,6 @@ def update_model(features, outcomes,
             st.session_state['bo'].optim = sampler
 
 
-
 def check_data(data, factors):
     """
     Check if the data is valid.
@@ -292,20 +305,20 @@ def check_data(data, factors):
 def load_data_widget():
     """Reusable data loading widget for sidebar"""
     st.sidebar.header("🗂️ Data Management")
-    
+
     # Initialize session state
     if 'loaded_data' not in st.session_state:
         st.session_state.loaded_data = None
     if 'data_filename' not in st.session_state:
         st.session_state.data_filename = None
-    
+
     # File uploader
     uploaded_file = st.sidebar.file_uploader(
-        "Choose a file", 
-        type=["csv",'xlsx','xls', 'xlsm', 'xlsb', 'odf', 'ods', 'odt'],
+        "Choose a file",
+        type=["csv", 'xlsx', 'xls', 'xlsm', 'xlsb', 'odf', 'ods', 'odt'],
         key="persistent_uploader"
     )
-    
+
     # Load data button
     if uploaded_file is not None:
         try:
@@ -314,32 +327,35 @@ def load_data_widget():
                 data = pd.read_csv(uploaded_file)
             else:
                 data = pd.read_excel(uploaded_file)
-            
+
             # Store in session state
             st.session_state.loaded_data = data
             st.session_state.data_filename = uploaded_file.name
             st.sidebar.success(f"✅ Loaded: {uploaded_file.name}")
-            
+
         except Exception as e:
             st.sidebar.error(f"❌ Error: {str(e)}")
-    
+
     # Display current data info
     if st.session_state.loaded_data is not None:
         data = st.session_state.loaded_data
         st.sidebar.markdown("---")
         st.sidebar.markdown("**Current Dataset:**")
         st.sidebar.markdown(f"📄 **File:** {st.session_state.data_filename}")
-        st.sidebar.markdown(f"📊 **Shape:** {data.shape[0]:,} rows × {data.shape[1]} columns")
-        st.sidebar.markdown(f"💾 **Memory:** {data.memory_usage(deep=True).sum() / 1024**2:.1f} MB")
-        
+        st.sidebar.markdown(
+            f"📊 **Shape:** {data.shape[0]:,} rows × {data.shape[1]} columns")
+        st.sidebar.markdown(
+            f"💾 **Memory:** {data.memory_usage(deep=True).sum() / 1024**2:.1f} MB")
+
         # Data management buttons
-        
+
         if st.sidebar.button("🗑️ Clear"):
             st.session_state.loaded_data = None
             st.session_state.data_filename = None
             st.rerun()
-    
+
     return st.session_state.loaded_data
+
 
 def get_loaded_data():
     """Simple function to get loaded data from session state"""

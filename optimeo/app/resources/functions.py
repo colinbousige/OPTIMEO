@@ -35,11 +35,12 @@ about_items = {
     'Get Help': 'mailto:colin.bousige@cnrs.fr',
     'Report a bug': "mailto:colin.bousige@cnrs.fr",
     'About': """
-        ## OPTIMEO
-    Version 1.4.0 (2026-07-17).
+## OPTIMEO
 
-        This app was made by [Colin Bousige](https://lmi.cnrs.fr/author/colin-bousige/). Contact me for support, requests, or to signal a bug.
-        """
+Version 1.4.0 (2026-07-17).
+
+This app was made by [Colin Bousige](https://lmi.cnrs.fr/author/colin-bousige/). Contact me for support, requests, or to signal a bug.
+"""
 }
 
 

@@ -12,7 +12,7 @@ OPTIMEO helps scientists and engineers optimize experimental processes through:
 
 Recommended install with ``uv``:
 
-    uv venv .venv --python 3.10
+    uv venv .venv --python 3.11
     source .venv/bin/activate
     uv pip install optimeo
 
@@ -52,6 +52,6 @@ For full API pages, use the docs sidebar or direct module pages:
 - ``optimeo/doe.html``
 """
 
-__version__ = "1.3.3"
+__version__ = "1.4.0"
 
 __all__ = ["__version__"]

@@ -37,7 +37,7 @@ Installing the package and its dependencies should take up about 1.3 GB on your 
 #### Recommended: install from PyPI with uv
 
 ```bash
-uv venv .venv --python 3.10
+uv venv .venv --python 3.11
 source .venv/bin/activate # Linux / macOS
 uv pip install optimeo
 ```
@@ -131,7 +131,7 @@ If you prefer uv:
 ```bash
 git clone https://github.com/colinbousige/OPTIMEO.git
 cd OPTIMEO
-uv venv .venv --python 3.10
+uv venv .venv --python 3.11
 source .venv/bin/activate # Linux / macOS
 uv sync
 optimeo

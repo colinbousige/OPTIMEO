@@ -415,7 +415,7 @@ class DesignOfExperiments:
                 parameter_constraints=self._feature_constraints
             )
             gs = GenerationStrategy(
-                steps=[GenerationStep(
+                nodes=[GenerationStep(
                     generator=Generators.SOBOL,
                     num_trials=-1,
                     should_deduplicate=True,
@@ -428,11 +428,13 @@ class DesignOfExperiments:
                 data=None,
                 n=self.Nexp
             )
-            generator_run = generated_runs[0][0]
+            generated_run = generated_runs[0]
+            if len(generated_run) == 1:
+                generated_run = generated_run[0]
             if self.Nexp == 1:
-                ax_client.experiment.new_trial(generator_run)
+                ax_client.experiment.new_trial(generated_run)
             else:
-                ax_client.experiment.new_batch_trial(generator_run)
+                ax_client.experiment.new_batch_trial(generated_run)
             trials = ax_client.get_trials_data_frame()
             self.design = trials[trials['trial_status'] == 'CANDIDATE']
             self.design = self._design.drop(columns=['trial_index',

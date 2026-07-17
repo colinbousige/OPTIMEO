@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "optimeo"
-version = "1.3.3"
+version = "1.4.0"
 description = "OPTIMEO: Bayesian Optimization Web App for Process Tuning, Modeling, and Orchestration"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { text = "MIT License" }
 authors = [{ name = "Colin Bousige", email = "colin.bousige@cnrs.fr" }]
 classifiers = [
@@ -16,7 +16,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "ax-platform==1.2.1",
+    "ax-platform==1.3.1",
     "definitive_screening_design==0.5.0",
     "dexpy==0.12",
     "doepy==0.0.1",

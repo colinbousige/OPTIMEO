@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.4.0] - 2026-07-17
+
+### Changed
+
+- Updated to ax `v1.3.1` and should correct all the breaking changes introduced by the Ax v1.3.0 update.
+- Added support for equality constraints in the Bayesian Optimization workflow
+- Uses ax `v1.3.1` Pareto front plotting for multi-objective optimization with a line connecting the Pareto front points, improving visual clarity of the trade-off surface.
+- Multi-objective optimization feature importance plots are now shown in tabs for each objective.
+
 ## [1.3.3] - 2026-06-08
 
 ### Fixed

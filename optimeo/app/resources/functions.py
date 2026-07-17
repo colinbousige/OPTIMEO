@@ -26,6 +26,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.pipeline import make_pipeline
 import streamlit.components.v1 as components
+import re
 
 APP_DIR = Path(__file__).resolve().parents[1]
 RESOURCES_DIR = APP_DIR / "resources"
@@ -35,7 +36,7 @@ about_items = {
     'Report a bug': "mailto:colin.bousige@cnrs.fr",
     'About': """
         ## OPTIMEO
-    Version 1.3.3 (2026-06-08).
+    Version 1.4.0 (2026-07-17).
 
         This app was made by [Colin Bousige](https://lmi.cnrs.fr/author/colin-bousige/). Contact me for support, requests, or to signal a bug.
         """
@@ -216,8 +217,17 @@ def encode_data2(data, factors):
 def check_constraints(df, constraints):
     results = {}
     for constraint in constraints:
-        # Evaluate the constraint as a boolean expression
-        results[constraint] = df.eval(constraint)
+        # Pandas eval uses '==', while Ax constraints use '=' for equality.
+        eval_constraint = re.sub(
+            r"(?<![<>=])=(?![=])",
+            "==",
+            constraint,
+        )
+        try:
+            results[constraint] = df.eval(eval_constraint)
+        except Exception:
+            # Keep behavior robust for invalid user expressions.
+            results[constraint] = pd.Series(False, index=df.index)
     return results
 
 

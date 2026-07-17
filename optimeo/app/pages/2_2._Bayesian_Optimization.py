@@ -16,6 +16,7 @@ from botorch.acquisition.analytic import UpperConfidenceBound
 from resources.functions import *
 import streamlit as st
 import warnings
+import re
 warnings.simplefilter(action='ignore', category=FutureWarning)
 warnings.simplefilter(action='ignore', category=DeprecationWarning)
 warnings.simplefilter(action='ignore', category=UserWarning)
@@ -80,6 +81,29 @@ def data_changed():
     if isinstance(edited, pd.DataFrame):
         st.session_state.loaded_data = edited.copy()
     model_changed()
+
+
+def parse_linear_constraints(raw_constraints: str) -> list[str]:
+    """Parse comma-separated linear constraints and normalize operators/spaces.
+
+    Supports inequalities (<=, >=) and equalities (==).
+    Strict inequalities (<, >) are normalized to <= and >= for Ax compatibility.
+    """
+    if raw_constraints is None:
+        return []
+
+    constraints = [c.strip() for c in raw_constraints.split(",") if c.strip()]
+    normalized = []
+    for constraint in constraints:
+        # add spaces around operators and normalize to Ax-compatible format
+        c = re.sub(r"\s+", " ", constraint).strip()
+        c = re.sub(r"(?<![<>=])<(?![=])", "<=", c)
+        c = re.sub(r"(?<![<>=])>(?![=])", ">=", c)
+        c = re.sub(r"(?<![<>=])=(?![=])", "==", c)
+        c = re.sub(r"\s*(<=|>=|==|\+|-)\s*", r" \1 ", c)
+        c = re.sub(r"\s+", " ", c).strip()
+        normalized.append(c)
+    return normalized
 
 
 # if "data" not in st.session_state:
@@ -369,24 +393,17 @@ For example, this can happen if you are using a robot to make experiments with v
                                                  key=f"feature_constraints_{widget_scope}",
                                                  help="""Add **linear** constraints to the parameters. Leave blank if no constraints, and use a comma to separate multiple constraints.
 
-The constraints should be in the form of inequalities such as:
+The constraints should be linear inequalities or equalities, such as:
 
 - `x1 >= 0`
 - `x2 <= 10, x4 >= -0.5`
 - `x1 + 3*x2 <= 5`
+- `x1 + x2 == 5`
+
+You can use `==`, `<=`, or `>=`. If you enter strict `<` or `>`, OPTIMEO will convert them to `<=` or `>=`.
 
 If you want to add non-linear constraint like `x1^2 + x2^2 <= 5`, you should first transform your columns before loading the data file.""", on_change=model_changed)
-        if len(feature_constraints) > 0:
-            feature_constraints = feature_constraints.replace("+", " + ")
-            feature_constraints = feature_constraints.replace("<", "<=")
-            feature_constraints = feature_constraints.replace(">", ">=")
-            feature_constraints = feature_constraints.replace("<==", "<=")
-            feature_constraints = feature_constraints.replace("<=", " <= ")
-            feature_constraints = feature_constraints.replace(">==", ">=")
-            feature_constraints = feature_constraints.replace(">=", " >= ")
-            feature_constraints = feature_constraints.split(",")
-        else:
-            feature_constraints = []
+        feature_constraints = parse_linear_constraints(feature_constraints)
 
         outcome_constraints = cols[0].text_input(f"""Add **linear** constraints to the **outcomes that are not objectives**: {', '.join(non_metric_outcomes)}""",
                                                  key=f"outcome_constraints_{widget_scope}",
@@ -394,21 +411,16 @@ If you want to add non-linear constraint like `x1^2 + x2^2 <= 5`, you should fir
                                                      non_metric_outcomes) > 0 else True,
                                                  help="""You can add constraints to the outcomes **that are not objectives**. Leave blank if no constraints, and use a comma to separate multiple constraints.
 
-The constraints should be in the form of inequalities such as:
-`constrained_outcome <= some_bound`
+The constraints should be linear inequalities or equalities, such as:
+
+- `constrained_outcome <= some_bound`
+- `constrained_outcome >= some_bound`
+- `constrained_outcome == target_value`
+
+You can use `==`, `<=`, or `>=`. If you enter strict `<` or `>`, OPTIMEO will convert them to `<=` or `>=`.
 
 **Note:** This corresponds to setting an **objective thresholds** to incorporate domain knowledge. Thresholds define minimum acceptable values for objectives: "If objective_1 is less than X, it doesn't matter how good objective_2 is - that solution is unacceptable." This helps focus the search on practically feasible solutions. For example, if maximizing yield, you might set a threshold of 80% to exclude any solutions below that value regardless of other objectives.""", on_change=model_changed)
-        if len(outcome_constraints) > 0:
-            outcome_constraints = outcome_constraints.replace("+", " + ")
-            outcome_constraints = outcome_constraints.replace("<", "<=")
-            outcome_constraints = outcome_constraints.replace(">", ">=")
-            outcome_constraints = outcome_constraints.replace("<==", "<=")
-            outcome_constraints = outcome_constraints.replace("<=", " <= ")
-            outcome_constraints = outcome_constraints.replace(">==", ">=")
-            outcome_constraints = outcome_constraints.replace(">=", " >= ")
-            outcome_constraints = outcome_constraints.split(",")
-        else:
-            outcome_constraints = []
+        outcome_constraints = parse_linear_constraints(outcome_constraints)
 
         acq_function = None
         tuning = cols[1].toggle("Allow tuning Optimization vs Exploitation?",
@@ -597,7 +609,9 @@ The colors transition smoothly:
                                                                     ))
             if len(responses) == 1:
                 figopt = st.session_state['bo'].plot_optimization_trace()
-            figimp = st.session_state['bo'].plot_feature_importances()
+            figimp = st.session_state['bo'].plot_feature_importances(
+                per_objective=(nmetrics > 1)
+            )
             if figmod is not None and count > 0:
                 for i in range(len(toplot)):
                     st.plotly_chart(figmod[i], key=f"figmod{i}")
@@ -606,7 +620,12 @@ The colors transition smoothly:
                            icon="⚠️")
             if figopt is not None:
                 st.plotly_chart(figopt, key=f"figopt")
-            if figimp is not None:
+            if isinstance(figimp, list):
+                tabs_imp = st.tabs([name for name, _ in figimp])
+                for tab, (_, fig) in zip(tabs_imp, figimp):
+                    with tab:
+                        st.plotly_chart(fig, key=f"figimp_{id(fig)}")
+            elif figimp is not None:
                 st.plotly_chart(figimp, key="figimp")
             else:
                 st.warning(

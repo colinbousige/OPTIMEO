@@ -939,11 +939,11 @@ Input data:
         Parameters
         ----------
         metricname : Optional[str]
-            The name of the metric to plot. If None, the first outcome metric is used.
+            The name of the metric to plot. If ``None``, the first outcome metric is used.
         slice_values : Optional[Dict[str, Any]]
             Dictionary of slice values for plotting.
         linear : bool
-            Whether to plot a linear slice plot. Default is False.
+            Whether to plot a linear slice plot. Default is ``False``.
 
         Returns
         -------
@@ -1266,7 +1266,7 @@ Input data:
         ----------
         relative : bool, optional
             Used only by the fallback Ax helper plot if analysis cards are
-            unavailable. Default is False.
+            unavailable. Default is ``False``.
         per_objective : bool, optional
             If True and the experiment is multiobjective, return one figure per
             objective instead of only the first objective's figure.
@@ -1423,7 +1423,7 @@ Input data:
         Parameters
         ----------
         show_error_bars : bool, optional
-            Whether to show error bars on the plot. Default is True.
+            Whether to show error bars on the plot. Default is ``True``.
 
         Returns
         -------
@@ -1628,7 +1628,7 @@ def flatten_dict(d, parent_key="", sep="_"):
 
 def ordered_dict_to_dataframe(data):
     """
-    Convert an OrderedDict with arbitrary nesting to a DataFrame.
+    Convert an ``OrderedDict`` with arbitrary nesting to a ``DataFrame``.
     """
     dflat = flatten_dict(data)
     out = []

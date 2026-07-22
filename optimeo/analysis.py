@@ -8,14 +8,14 @@
 
 """
 The analysis module provides tools for data analysis and regression modeling.
-The main workhorse is the `DataAnalysis` class, which allows for encoding categorical variables, performing regression analysis, and visualizing results.
+The main workhorse is the ``DataAnalysis`` class, which allows for encoding categorical variables, performing regression analysis, and visualizing results.
 
-It supports both linear regression using the `statsmodels` package and machine learning models from `sklearn`.
+It supports both linear regression using the ``statsmodels`` package and machine learning models from ``sklearn``.
 The class also provides methods for plotting Q-Q plots, box plots, histograms, and scatter plots.
 It includes functionality for bootstrap resampling to estimate the variability of model coefficients.
-The `DataAnalysis` class is designed to be flexible and extensible, allowing users to customize the regression analysis process.
+The ``DataAnalysis`` class is designed to be flexible and extensible, allowing users to customize the regression analysis process.
 
-You can see an example notebook [here](../examples/MLanalysis.ipynb).
+You can see an example notebook `here <../examples/MLanalysis.ipynb>`_.
 
 """
 
@@ -71,11 +71,11 @@ class DataAnalysis:
     response : str
         The response variable.
     split_size : float, optional
-        The proportion of the dataset to include in the test split. Default is `0.2`.
+        The proportion of the dataset to include in the test split. Default is ``0.2``.
     model_type : str, optional
         The type of machine learning model to use. Default is None. 
-        Must be one of the following: `"ElasticNetCV"`, `"RidgeCV"`,
-        `"LinearRegression"`, `"RandomForest"`, `"GaussianProcess"`, `"GradientBoosting"`.
+        Must be one of the following: ``"ElasticNetCV"``, ``"RidgeCV"``,
+        ``"LinearRegression"``, ``"RandomForest"``, ``"GaussianProcess"``, ``"GradientBoosting"``.
 
     Attributes
     ----------
@@ -246,8 +246,8 @@ class DataAnalysis:
     @property
     def model_type(self):
         """The type of machine learning model to use. Default is None. 
-            Must be one of the following: `"ElasticNetCV"`, `"RidgeCV"`,
-            `"LinearRegression"`, `"RandomForest"`, `"GaussianProcess"`, `"GradientBoosting"`."""
+            Must be one of the following: ``"ElasticNetCV"``, ``"RidgeCV"``,
+            ``"LinearRegression"``, ``"RandomForest"``, ``"GaussianProcess"``, ``"GradientBoosting"``."""
         return self._model_type
 
     @model_type.setter
@@ -271,7 +271,7 @@ class DataAnalysis:
 
     @property
     def split_size(self):
-        """The proportion of the dataset to include in the test split. Default is `0.2`."""
+        """The proportion of the dataset to include in the test split. Default is ``0.2``."""
         return self._split_size
 
     @split_size.setter
@@ -970,22 +970,22 @@ class DataAnalysis:
 
         Default parameters by model type
         --------------------------------
-        - ElasticNetCV:
+        ElasticNetCV:
             - l1_ratio : list, default=[0.1, 0.5, 0.7, 0.9, 0.95, 0.99, 1.0].
                 List of L1 ratios to try.
             - cv : int, default=5.
                 Cross-validation folds.
             - max_iter : int, default=1000.
                 Maximum iterations.
-        - RidgeCV:
+        RidgeCV:
             - alphas : list, default=[0.1, 1.0, 10.0].
                 List of alpha values to try.
             - cv : int, default=5.
                 Cross-validation folds.
-        - LinearRegression:
+        LinearRegression:
             - fit_intercept : bool, default=True.
                 Whether to calculate the intercept.
-        - RandomForest:
+        RandomForest:
             - n_estimators : int, default=100.
                 Number of trees in the forest.
             - max_depth : int or None, default=None.
@@ -994,7 +994,7 @@ class DataAnalysis:
                 Minimum samples required to split a node.
             - random_state : int, default=42.
                 Random seed for reproducibility.
-        - GaussianProcess:
+        GaussianProcess:
             - kernel : kernel object, default=None.
                 Kernel for the Gaussian Process.
             - alpha : float, default=1e-10.
@@ -1003,7 +1003,7 @@ class DataAnalysis:
                 Normalize target values.
             - random_state : int, default=42.
                 Random seed for reproducibility.
-        - GradientBoosting:
+        GradientBoosting:
             - n_estimators : int, default=100.
                 Number of boosting stages.
             - learning_rate : float, default=0.1.

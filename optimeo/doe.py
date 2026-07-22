@@ -12,7 +12,7 @@ It supports various types of designs including Full Factorial, Sobol sequence, F
 The class allows the user to specify the parameters, their types, and values, and generates the design accordingly.
 It also provides a method to plot the design using scatter plots.
 
-You can see an example notebook [here](../examples/doe.ipynb).
+You can see an example notebook `here <../examples/doe.ipynb>`_.
 """
 
 
@@ -220,7 +220,7 @@ class DesignOfExperiments:
 
     @property
     def Nexp(self) -> int:
-        """Number of experiments in the design, when applicable. Default is `4`."""
+        """Number of experiments in the design, when applicable. Default is ``4``."""
         return self._Nexp
 
     @Nexp.setter
@@ -230,7 +230,7 @@ class DesignOfExperiments:
 
     @property
     def order(self) -> int:
-        """Order of the model (for `'Optimal'` design). Default is `2`."""
+        """Order of the model (for ``'Optimal'`` design). Default is ``2``."""
         return self._order
 
     @property
@@ -251,8 +251,8 @@ class DesignOfExperiments:
 
     @property
     def alpha(self) -> str:
-        """Alpha for the Central Composite Design. Default is `'o'` (orthogonal).
-        Can be either `'o'` or `'r'` (rotatable)."""
+        """Alpha for the Central Composite Design. Default is ``'o'`` (orthogonal).
+        Can be either ``'o'`` or ``'r'`` (rotatable)."""
         return self._alpha
 
     @alpha.setter
@@ -260,7 +260,7 @@ class DesignOfExperiments:
         """Set the alpha of the design."""
         if value not in ['o', 'r']:
             raise ValueError(
-                "Alpha must be either 'o' (orthogonal) or 'r' (rotatable).")
+                "Alpha must be either ``'o'`` (orthogonal) or ``'r'`` (rotatable).")
         self._alpha = value
 
     @property
@@ -269,9 +269,9 @@ class DesignOfExperiments:
 
         There are three possible options for this input:
 
-        1. 'circumscribed' or 'ccc' (Default)
-        2. 'inscribed' or 'cci'
-        3. 'faced' or 'ccf'"""
+        1. ``'circumscribed'`` or ``'ccc'`` (Default)
+        2. ``'inscribed'`` or ``'cci'``
+        3. ``'faced'`` or ``'ccf'``"""
         return self._face
 
     @face.setter
@@ -279,7 +279,7 @@ class DesignOfExperiments:
         """Set the face of the design."""
         if value not in ['ccc', 'cci', 'ccf']:
             raise ValueError(
-                "Face must be either 'ccc' (circumscribed), 'cci' (inscribed), or 'ccf' (faced).")
+                "Face must be either ``'ccc'`` (circumscribed), ``'cci'`` (inscribed), or ``'ccf'`` (faced).")
         self._face = value
 
     @property
@@ -319,7 +319,7 @@ class DesignOfExperiments:
 
     @property
     def reduction(self) -> int:
-        """Reduction factor for `'Fractional Factorial'` designs. Default is `2`."""
+        """Reduction factor for ``'Fractional Factorial'`` designs. Default is ``2``."""
         return self._reduction
 
     @reduction.setter

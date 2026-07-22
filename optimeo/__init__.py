@@ -1,22 +1,30 @@
 """OPTIMEO: Bayesian optimization, design of experiments, and data analysis tools.
+================================================================================
 
-[![PyPI - Version](https://img.shields.io/pypi/v/optimeo)](https://pypi.org/project/optimeo/)
+.. image:: https://img.shields.io/pypi/v/optimeo
+   :alt: PyPI - Version
+   :target: https://pypi.org/project/optimeo/
 
 OPTIMEO helps scientists and engineers optimize experimental processes through:
 
-- Design of Experiments (DoE)
-- Bayesian Optimization (BO)
-- Data analysis and regression/model interpretation
+* Design of Experiments (DoE)
+* Bayesian Optimization (BO)
+* Data analysis and regression/model interpretation
 
-## Installation
+Installation
+------------
 
 Recommended install with ``uv``:
+
+.. code-block:: bash
 
     uv venv .venv --python 3.11
     source .venv/bin/activate
     uv pip install optimeo
 
 Alternative install with ``pip``:
+
+.. code-block:: bash
 
     python -m venv .venv
     source .venv/bin/activate
@@ -25,31 +33,39 @@ Alternative install with ``pip``:
 
 Install from GitHub:
 
+.. code-block:: bash
+
     python -m pip install "git+https://github.com/colinbousige/OPTIMEO.git"
 
-## Usage
+Usage
+-----
 
 Launch the Streamlit app:
+
+.. code-block:: bash
 
     optimeo
 
 If needed, disable Streamlit file watcher issues explicitly:
 
+.. code-block:: bash
+
     optimeo --server.fileWatcherType=none
 
-You can also use the hosted app at https://optimeo.streamlit.app/.
+You can also use the hosted app at `https://optimeo.streamlit.app/ <https://optimeo.streamlit.app/>`_.
 
-## API Overview
+API Overview
+------------
 
-- ``optimeo.doe``: design of experiments utilities and classes
-- ``optimeo.bo``: Bayesian optimization workflow and helpers
-- ``optimeo.analysis``: data analysis and machine learning modeling
+* ``optimeo.doe``: design of experiments utilities and classes
+* ``optimeo.bo``: Bayesian optimization workflow and helpers
+* ``optimeo.analysis``: data analysis and machine learning modeling
 
 For full API pages, use the docs sidebar or direct module pages:
 
-- ``optimeo/analysis.html``
-- ``optimeo/bo.html``
-- ``optimeo/doe.html``
+* `optimeo/analysis.html <optimeo/analysis.html>`_
+* `optimeo/bo.html <optimeo/bo.html>`_
+* `optimeo/doe.html <optimeo/doe.html>`_
 """
 
 __version__ = "1.4.0"

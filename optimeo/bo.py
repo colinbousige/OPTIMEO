@@ -7,10 +7,10 @@
 # any later version.
 
 """
-This module provides a class for optimizing experiments using Bayesian Optimization (BO) with the [Ax platform](https://ax.dev/).
+This module provides a class for optimizing experiments using Bayesian Optimization (BO) with the `Ax platform <https://ax.dev/>`_.
 It includes methods for initializing the experiment, suggesting trials, predicting outcomes, and plotting results.
 
-You can see an example notebook [here](../examples/bo.ipynb).
+You can see an example notebook `here <../examples/bo.ipynb>`_.
 
 """
 
@@ -56,7 +56,7 @@ warnings.simplefilter(action='ignore', category=RuntimeError)
 
 class BOExperiment:
     """
-    BOExperiment is a class designed to facilitate Bayesian Optimization experiments using the [Ax platform](https://ax.dev/).
+    BOExperiment is a class designed to facilitate Bayesian Optimization experiments using the `Ax platform <https://ax.dev/>`_.
     It encapsulates the experiment setup, including features, outcomes, constraints, and optimization methods.
 
     Example
@@ -91,37 +91,38 @@ class BOExperiment:
         - 'type': The type of the outcome (e.g., 'int', 'float').
         - 'data': The observed data for the outcome.
     ranges: Optional[Dict[str, Dict[str, Any]]]
-        A dictionary defining the ranges of the features. Default is `None`.
+        A dictionary defining the ranges of the features. Default is ``None``.
         If not provided, the ranges will be inferred from the features data.
-        The ranges should be in the format `{'feature_name': [minvalue,maxvalue]}`.
+        The ranges should be in the format ``{'feature_name': [minvalue,maxvalue]}``.
     N: int
         The number of trials to suggest in each optimization step. Must be a positive integer.
     maximize: Union[bool, Dict[str, bool]]
-        A boolean or dict indicating whether to maximize the outcomes in the form `{'outcome1':True, 'outcome2':False}`.
-        If a single boolean is provided, it is applied to all outcomes. Default is `True`.
+        A boolean or dict indicating whether to maximize the outcomes in the form ``{'outcome1':True, 'outcome2':False}``.
+        If a single boolean is provided, it is applied to all outcomes. Default is ``True``.
     fixed_features: Optional[Dict[str, Any]]
-        A dictionary defining fixed features with their values. Default is `None`.
+        A dictionary defining fixed features with their values. Default is ``None``.
         If provided, the fixed features will be treated as fixed parameters in the generation process.
-        The fixed features should be in the format `{'feature_name': value}`.
+        The fixed features should be in the format ``{'feature_name': value}``.
         The values should be the fixed values for the respective features.
     outcome_constraints: Optional[List[str]]
-        Constraints on the outcomes, specified as a list of strings. Default is `None`.
-        The constraints should be in the format `{'outcome_name': [minvalue,maxvalue]}`.
+        Constraints on the outcomes, specified as a list of strings. Default is ``None``.
+        The constraints should be in the format ``{'outcome_name': [minvalue,maxvalue]}``.
     objective_thresholds: Optional[Dict[str, float]]
         Reference-point thresholds for multi-objective optimization, specified per outcome
-        in the format ``{'outcome_name': threshold}``. Default is `None`.
+        in the format ``{'outcome_name': threshold}``. Default is ``None``.
         Setting these avoids Ax's default winsorization warning for multi-objective runs.
     feature_constraints: Optional[List[str]]
-        Constraints on the features, specified as a list of strings. Default is `None`.
-        The constraints should be in the format `{'feature_name': [minvalue,maxvalue]}`.
+        Constraints on the features, specified as a list of strings. Default is ``None``.
+        The constraints should be in the format ``{'feature_name': [minvalue,maxvalue]}``.
     optim: str
         The optimization method to use, either 'bo' for Bayesian Optimization or 'sobol' for Sobol sequence. Default is 'bo'.
     acq_func: Optional[Dict[str, Any]]
         The acquisition function to use for the optimization process. It must be a dict with 2 keys:
-        - `acqf`: the acquisition function class to use (e.g., `UpperConfidenceBound`),
-        - `acqf_kwargs`: a dict of the kwargs to pass to the acquisition function class. (e.g. `{'beta': 0.1}`).
 
-        If not provided, the default acquisition function is used (`LogExpectedImprovement` or `qLogExpectedImprovement` if N>1).
+        - ``acqf``: the acquisition function class to use (e.g., ``UpperConfidenceBound``),
+        - ``acqf_kwargs``: a dict of the kwargs to pass to the acquisition function class. (e.g. ``{'beta': 0.1}``).
+
+        If not provided, the default acquisition function is used (``LogExpectedImprovement`` or ``qLogExpectedImprovement`` if N>1).
 
     Attributes
     ----------
@@ -296,10 +297,10 @@ class BOExperiment:
     @property
     def ranges(self):
         """
-        A dictionary defining the ranges of the features. Default is `None`.
+        A dictionary defining the ranges of the features. Default is ``None``.
 
         If not provided, the ranges will be inferred from the features data.
-        The ranges should be in the format `{'feature_name': [minvalue,maxvalue]}`.
+        The ranges should be in the format ``{'feature_name': [minvalue,maxvalue]}``.
         """
         return self._ranges
 
@@ -360,9 +361,9 @@ class BOExperiment:
     @property
     def fixed_features(self):
         """
-        A dictionary defining fixed features with their values. Default is `None`.
+        A dictionary defining fixed features with their values. Default is ``None``.
         If provided, the fixed features will be treated as fixed parameters in the generation process.
-        The fixed features should be in the format `{'feature_name': value}`.
+        The fixed features should be in the format ``{'feature_name': value}``.
         The values should be the fixed values for the respective features.
         """
         return self._fixed_features
@@ -388,7 +389,7 @@ class BOExperiment:
     @property
     def N(self):
         """
-        The number of trials to suggest in each optimization step. Must be a positive integer. Default is `1`.
+        The number of trials to suggest in each optimization step. Must be a positive integer. Default is ``1``.
         """
         return self._N
 
@@ -430,7 +431,7 @@ class BOExperiment:
     @property
     def outcome_constraints(self):
         """
-        Constraints on the outcomes, specified as a list of strings. Default is `None`.
+        Constraints on the outcomes, specified as a list of strings. Default is ``None``.
         """
         return self._outcome_constraints
 
@@ -484,7 +485,7 @@ class BOExperiment:
     @property
     def feature_constraints(self):
         """
-        Constraints on the features, specified as a list of strings. Default is `None`.
+        Constraints on the features, specified as a list of strings. Default is ``None``.
 
         Example
         -------
@@ -516,7 +517,7 @@ class BOExperiment:
     @property
     def optim(self):
         """
-        The optimization method to use, either `'bo'` for Bayesian Optimization or `'sobol'` for Sobol sequence. Default is `'bo'`.
+        The optimization method to use, either ``   `` for Bayesian Optimization or ``'sobol'`` for Sobol sequence. Default is ``'bo'``.
         """
         return self._optim
 
@@ -585,10 +586,11 @@ class BOExperiment:
     def acq_func(self):
         """
         The acquisition function to use for the optimization process. It must be a dict with 2 keys:
-        - `acqf`: the acquisition function class to use (e.g., `UpperConfidenceBound`),
-        - `acqf_kwargs`: a dict of the kwargs to pass to the acquisition function class. (e.g. `{'beta': 0.1}`).
 
-        If not provided, the default acquisition function is used (`LogExpectedImprovement` or `qLogExpectedImprovement` if N>1).
+        - ``acqf``: the acquisition function class to use (e.g., `UpperConfidenceBound`),
+        - ``acqf_kwargs``: a dict of the kwargs to pass to the acquisition function class. (e.g. ``{'beta': 0.1}``).
+
+        If not provided, the default acquisition function is used (``LogExpectedImprovement`` or ``qLogExpectedImprovement`` if N>1).
 
         Example
         -------

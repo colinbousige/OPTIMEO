@@ -73,7 +73,7 @@ class DataAnalysis:
     split_size : float, optional
         The proportion of the dataset to include in the test split. Default is ``0.2``.
     model_type : str, optional
-        The type of machine learning model to use. Default is None. 
+        The type of machine learning model to use. Default is ``None``. 
         Must be one of the following: ``"ElasticNetCV"``, ``"RidgeCV"``,
         ``"LinearRegression"``, ``"RandomForest"``, ``"GaussianProcess"``, ``"GradientBoosting"``.
 
@@ -245,7 +245,7 @@ class DataAnalysis:
 
     @property
     def model_type(self):
-        """The type of machine learning model to use. Default is None. 
+        """The type of machine learning model to use. Default is ``None``. 
             Must be one of the following: ``"ElasticNetCV"``, ``"RidgeCV"``,
             ``"LinearRegression"``, ``"RandomForest"``, ``"GaussianProcess"``, ``"GradientBoosting"``."""
         return self._model_type
@@ -967,7 +967,7 @@ class DataAnalysis:
         ----------
         kwargs : dict
             Additional keyword arguments for the model. Overrides default
-            parameters. See the Notes section for the defaults used by
+            parameters. See the `Notes` section for the defaults used by
             each model type.
 
         Returns
@@ -1096,7 +1096,7 @@ class DataAnalysis:
         Parameters
         ----------
         features_in_log : bool, optional
-            Whether to plot the feature importances in log scale. Default is False.
+            Whether to plot the feature importances in log scale. Default is ``False``.
 
         Returns
         -------
@@ -1254,7 +1254,7 @@ class DataAnalysis:
         Parameters
         ----------
         X : pd.DataFrame, optional
-            The input features. Default is None, which uses the original data.
+            The input features. Default is ``None``, which uses the original data.
 
         Returns
         -------

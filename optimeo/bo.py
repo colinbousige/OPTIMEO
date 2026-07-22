@@ -81,15 +81,17 @@ class BOExperiment:
     ----------
     features: Dict[str, Dict[str, Any]]
         A dictionary defining the features of the experiment, including their types and ranges.
-        Each feature is represented as a dictionary with keys 'type', 'data', and 'range'.
-        - 'type': The type of the feature (e.g., 'int', 'float', 'text').
-        - 'data': The observed data for the feature.
-        - 'range': The range of values for the feature.
+        Each feature is represented as a dictionary with keys ``'type'``, ``'data'``, and ``'range'``.
+
+        - ``'type'``: The type of the feature (e.g., ``'int'``, ``'float'``, ``'text'``).
+        - ``'data'``: The observed data for the feature.
+        - ``'range'``: The range of values for the feature.
     outcomes: Dict[str, Dict[str, Any]]
         A dictionary defining the outcomes of the experiment, including their types and observed data.
-        Each outcome is represented as a dictionary with keys 'type' and 'data'.
-        - 'type': The type of the outcome (e.g., 'int', 'float').
-        - 'data': The observed data for the outcome.
+        Each outcome is represented as a dictionary with keys ``'type'`` and ``'data'``.
+
+        - ``'type'``: The type of the outcome (e.g., ``'int'``, ``'float'``).
+        - ``'data'``: The observed data for the outcome.
     ranges: Optional[Dict[str, Dict[str, Any]]]
         A dictionary defining the ranges of the features. Default is ``None``.
         If not provided, the ranges will be inferred from the features data.
@@ -115,7 +117,7 @@ class BOExperiment:
         Constraints on the features, specified as a list of strings. Default is ``None``.
         The constraints should be in the format ``{'feature_name': [minvalue,maxvalue]}``.
     optim: str
-        The optimization method to use, either 'bo' for Bayesian Optimization or 'sobol' for Sobol sequence. Default is 'bo'.
+        The optimization method to use, either ``'bo'`` for Bayesian Optimization or ``'sobol'`` for Sobol sequence. Default is ``'bo'``.
     acq_func: Optional[Dict[str, Any]]
         The acquisition function to use for the optimization process. It must be a dict with 2 keys:
 
@@ -141,7 +143,7 @@ class BOExperiment:
     feature_constraints: Optional[List[Dict[str, Any]]]
         Constraints on the features, specified as a list of dictionaries.
     optim: str
-        The optimization method to use, either 'bo' for Bayesian Optimization or 'sobol' for Sobol sequence.
+        The optimization method to use, either ``'bo'`` for Bayesian Optimization or ``'sobol'`` for Sobol sequence.
     data: pd.DataFrame
         A DataFrame representing the current data in the experiment, including features and outcomes.
     acq_func: dict
@@ -517,7 +519,7 @@ class BOExperiment:
     @property
     def optim(self):
         """
-        The optimization method to use, either ``   `` for Bayesian Optimization or ``'sobol'`` for Sobol sequence. Default is ``'bo'``.
+        The optimization method to use, either ``'bo'`` for Bayesian Optimization or ``'sobol'`` for Sobol sequence. Default is ``'bo'``.
         """
         return self._optim
 
@@ -587,7 +589,7 @@ class BOExperiment:
         """
         The acquisition function to use for the optimization process. It must be a dict with 2 keys:
 
-        - ``acqf``: the acquisition function class to use (e.g., `UpperConfidenceBound`),
+        - ``acqf``: the acquisition function class to use (e.g., ``UpperConfidenceBound``),
         - ``acqf_kwargs``: a dict of the kwargs to pass to the acquisition function class. (e.g. ``{'beta': 0.1}``).
 
         If not provided, the default acquisition function is used (``LogExpectedImprovement`` or ``qLogExpectedImprovement`` if N>1).
@@ -933,6 +935,7 @@ Input data:
     def plot_model(self, metricname=None, slice_values={}, linear=False):
         """
         Plot the model's predictions for the experiment's parameters and outcomes.
+
         Parameters
         ----------
         metricname : Optional[str]
@@ -941,6 +944,7 @@ Input data:
             Dictionary of slice values for plotting.
         linear : bool
             Whether to plot a linear slice plot. Default is False.
+
         Returns
         -------
         plotly.graph_objects.Figure: 

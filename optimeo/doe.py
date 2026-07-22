@@ -69,25 +69,25 @@ class DesignOfExperiments:
 
     type : str
         The type of design to create. Must be one of:
-        `'Full Factorial'`, `'Sobol sequence'`, `'Fractional Factorial'`,
-        `'Definitive Screening'`, `'Space Filling Latin Hypercube'`,
-        `'Randomized Latin Hypercube'`, `'Optimal'`, `'Plackett-Burman'`,
-        `'Box-Behnken'` or `'Central Composite'`.
+        ``'Full Factorial'``, ``'Sobol sequence'``, ``'Fractional Factorial'``,
+        ``'Definitive Screening'``, ``'Space Filling Latin Hypercube'``,
+        ``'Randomized Latin Hypercube'``, ``'Optimal'``, ``'Plackett-Burman'``,
+        ``'Box-Behnken'`` or ``'Central Composite'``.
     parameters : List[Dict[str, Dict[str, Any]]]
         List of parameters for the design, each with a dictionary of properties.
-        Each dictionary should contain 'name', 'type', and 'values'.
-        'values' should be a list of possible values for the parameter.
-        'type' should be either "int", "integer", "float", "<other>". 
+        Each dictionary should contain ``'name'``, ``'type'``, and ``'values'``.
+        ``'values'`` should be a list of possible values for the parameter.
+        ``'type'`` should be either "int", "integer", "float", "<other>". 
         Any <other> will be considered as "categorical".
-        'values' should be a list of possible values for the parameter.
+        ``'values'`` should be a list of possible values for the parameter.
     Nexp : int, optional
         Number of experiments in the design, when applicable. Default is 4.
     order : int, optional
-        Order of the model (for 'Optimal' design). Default is 2.
+        Order of the model (for ``'Optimal'`` design). Default is 2.
     randomize : bool, optional
         Whether to randomize the run order. Default is True.
     reduction : int, optional
-        Reduction factor for 'Fractional Factorial' designs. Default is 2.
+        Reduction factor for ``'Fractional Factorial'`` designs. Default is 2.
     feature_constraints : Optional[List[Dict[str, Any]]], optional
         Feature constraints of the experiment for Sobol sequence. Default is None.
         If a single dictionary is provided, it will be converted to a list.
@@ -109,7 +109,7 @@ class DesignOfExperiments:
     randomize : bool
         Whether to randomize the run order.
     reduction : int
-        Reduction factor for `'Fractional Factorial'` designs.
+        Reduction factor for ``'Fractional Factorial'`` designs.
     design : pd.DataFrame
         The design DataFrame.
     lows : Dict[str, float]
@@ -206,11 +206,11 @@ class DesignOfExperiments:
     @property
     def parameters(self) -> List[Dict[str, Dict[str, Any]]]:
         """List of parameters for the design, each with a dictionary of properties.
-            Each dictionary should contain the keys `"name"`, `"type"`, and `"values"`.
-            `"values"` should be a list of possible values for the parameter.
-            `"type"` should be either `"int"`, `"integer"`, `"float"`, `"<other>"`. 
-            Any `"<other>"` will be considered as `"categorical"`.
-            `values` should be a list of possible values for the parameter."""
+            Each dictionary should contain the keys ``"name"``, ``"type"``, and ``"values"``.
+            ``"values"`` should be a list of possible values for the parameter.
+            ``"type"`` should be either ``"int"``, ``"integer"``, ``"float"``, ``"<other>"``. 
+            Any ``"<other>"`` will be considered as ``"categorical"``.
+            ``"values"`` should be a list of possible values for the parameter."""
         return self._parameters
 
     @parameters.setter
@@ -309,7 +309,7 @@ class DesignOfExperiments:
 
     @property
     def randomize(self) -> bool:
-        """Whether to randomize the run order. Default is `True`."""
+        """Whether to randomize the run order. Default is ``True``."""
         return self._randomize
 
     @randomize.setter

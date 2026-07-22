@@ -965,58 +965,70 @@ class DataAnalysis:
 
         Parameters
         ----------
-        kwargs : dict
-            Additional keyword arguments for the model. Overrides default parameters.
+        kwargs: dict
+        Additional keyword arguments for the model. Overrides default parameters.
 
         Default parameters by model type
-        --------------------------------
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
         ElasticNetCV:
-            - l1_ratio : list, default=[0.1, 0.5, 0.7, 0.9, 0.95, 0.99, 1.0].
-                List of L1 ratios to try.
-            - cv : int, default=5.
-                Cross-validation folds.
-            - max_iter : int, default=1000.
-                Maximum iterations.
+        -------------
+        * ``l1_ratio``: list, default = [0.1, 0.5, 0.7, 0.9, 0.95, 0.99, 1.0].
+        List of L1 ratios to try .
+        * ``cv``: int, default = 5.
+        Cross-validation folds.
+        * ``max_iter``: int, default = 1000.
+        Maximum iterations.
+
         RidgeCV:
-            - alphas : list, default=[0.1, 1.0, 10.0].
-                List of alpha values to try.
-            - cv : int, default=5.
-                Cross-validation folds.
+        -------
+        * ``alphas``: list, default = [0.1, 1.0, 10.0].
+        List of alpha values to try .
+        * ``cv``: int, default = 5.
+        Cross-validation folds.
+
         LinearRegression:
-            - fit_intercept : bool, default=True.
-                Whether to calculate the intercept.
+        ----------------
+        * ``fit_intercept``: bool, default = True.
+        Whether to calculate the intercept.
+
         RandomForest:
-            - n_estimators : int, default=100.
-                Number of trees in the forest.
-            - max_depth : int or None, default=None.
-                Maximum depth of trees.
-            - min_samples_split : int, default=2.
-                Minimum samples required to split a node.
-            - random_state : int, default=42.
-                Random seed for reproducibility.
+        -------------
+        * ``n_estimators``: int, default = 100.
+        Number of trees in the forest.
+        * ``max_depth``: int or None, default = None.
+        Maximum depth of trees.
+        * ``min_samples_split``: int, default = 2.
+        Minimum samples required to split a node.
+        * ``random_state``: int, default = 42.
+        Random seed for reproducibility.
+
         GaussianProcess:
-            - kernel : kernel object, default=None.
-                Kernel for the Gaussian Process.
-            - alpha : float, default=1e-10.
-                Value added to diagonal of kernel matrix.
-            - normalize_y : bool, default=True.
-                Normalize target values.
-            - random_state : int, default=42.
-                Random seed for reproducibility.
+        ---------------
+        * ``kernel``: kernel object, default = None.
+        Kernel for the Gaussian Process.
+        * ``alpha``: float, default = 1e-10.
+        Value added to diagonal of kernel matrix.
+        * ``normalize_y``: bool, default = True.
+        Normalize target values.
+        * ``random_state``: int, default = 42.
+        Random seed for reproducibility.
+
         GradientBoosting:
-            - n_estimators : int, default=100.
-                Number of boosting stages.
-            - learning_rate : float, default=0.1.
-                Learning rate.
-            - max_depth : int, default=3.
-                Maximum depth of trees.
-            - random_state : int, default=42.
-                Random seed for reproducibility.
+        -----------------
+        * ``n_estimators``: int, default = 100.
+        Number of boosting stages.
+        * ``learning_rate``: float, default = 0.1.
+        Learning rate.
+        * ``max_depth``: int, default = 3.
+        Maximum depth of trees.
+        * ``random_state``: int, default = 42.
+        Random seed for reproducibility.
 
         Returns
         -------
         object
-            The fitted machine learning model.
+        The fitted machine learning model.
         """
         if self._model_type is None:
             raise ValueError("Model must be provided.")

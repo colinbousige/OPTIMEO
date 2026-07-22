@@ -93,7 +93,7 @@ class DataAnalysis:
     linear_model : object
         The linear model object.
     equation : str
-        The equation for the linear model, in the form `response ~ var1 + var2 + var1:var2`.
+        The equation for the linear model, in the form ``"response ~ var1 + var2 + var1:var2"``.
     model : object
         The machine learning model object.
     model_type : str
@@ -164,7 +164,7 @@ class DataAnalysis:
     def encode_data(self):
         """
         Called during initialization: encodes categorical variables in the data if there are any. 
-        Uses `LabelEncoder()` from `sklearn` to convert categorical variables to numerical values.
+        Uses ``LabelEncoder()`` from ``sklearn`` to convert categorical variables to numerical values.
         Also drops rows with NaN values.
         """
         self._dtypes = self._data.dtypes
@@ -179,7 +179,7 @@ class DataAnalysis:
 
     @property
     def factors(self):
-        """The list of names of the columns of the `data` DataFrame that contain factor variables."""
+        """The list of names of the columns of the ``data`` DataFrame that contain factor variables."""
         return self._factors
 
     @factors.setter
@@ -230,7 +230,7 @@ class DataAnalysis:
 
     @property
     def equation(self):
-        """The equation for the linear model, in the form ``response ~ var1 + var2 + var1:var2``.
+        """The equation for the linear model, in the form ``"response ~ var1 + var2 + var1:var2"``.
 
         See statsmodels formula examples:
         https://www.statsmodels.org/dev/examples/notebooks/generated/formulas.html
@@ -748,7 +748,7 @@ class DataAnalysis:
         Parameters
         ----------
         order : int, optional
-            The order of the polynomial. Default is 1.
+            The order of the polynomial. Default is ``1``.
         quadratic : list, optional
             The list of quadratic factors. Default is an empty list.
 
@@ -795,7 +795,7 @@ class DataAnalysis:
         Parameters
         ----------
         order : int, optional
-            The order of the polynomial. Default is 1. The parameter 
+            The order of the polynomial. Default is ``1``. The parameter 
             is not used if the equation is already set.
         quadratic : list, optional
             The list of quadratic factors. Default is an empty list.
@@ -1317,7 +1317,7 @@ def bootstrap_coefficients(mod, X, y, n_bootstrap=100, random_state=None):
     y : pd.Series
         The target variable.
     n_bootstrap : int, optional
-        The number of bootstrap samples. Default is 100.
+        The number of bootstrap samples. Default is ``100``.
     random_state : int, optional
         The seed for the random number generator.
 

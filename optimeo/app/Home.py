@@ -79,7 +79,7 @@ Generate a Design of Experiment (DoE) for the optimization of your process. Depe
 **2. New experiments using Bayesian Optimization:**  
 From a previous set of experiments and their results, generate a new set of experiments to optimize your process. You can define up to 10 outcomes. Any subset of outcomes can be marked as optimization objectives (maximize/minimize), and the others can be used as constraints.
 
-The BO page also provides model interpretation plots, including Ax Sensitivity Analysis.
+The BO page also provides model interpretation plots, including Ax Sensitivity Analysis. Each plot can be downloaded as JSON with its plotted data and layout; the file includes a commented Python example for loading and displaying the figure with Plotly.
 
 **3. Data analysis and modeling:**  
 Analyze the results of your experiments and model the response of your process.

@@ -37,7 +37,7 @@ about_items = {
     'About': """
 ## OPTIMEO
 
-Version 1.4.0 (2026-07-17).
+Version 1.4.1 (2026-10-08).
 
 This app was made by [Colin Bousige](https://lmi.cnrs.fr/author/colin-bousige/). Contact me for support, requests, or to signal a bug.
 """

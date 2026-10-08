@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.4.1] - 2026-10-08
+
+### Added
+- Added downloadable JSON data for BO model, optimization trace, feature importance, and Pareto plots. Each file includes a Python example for loading and displaying the Plotly figure.
+
 ## [1.4.0] - 2026-07-17
 
 ### Changed

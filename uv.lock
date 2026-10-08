@@ -1420,7 +1420,7 @@ wheels = [
 
 [[package]]
 name = "optimeo"
-version = "1.3.3"
+version = "1.4.1"
 source = { editable = "." }
 dependencies = [
     { name = "ax-platform" },

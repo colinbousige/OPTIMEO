@@ -106,6 +106,27 @@ def parse_linear_constraints(raw_constraints: str) -> list[str]:
     return normalized
 
 
+def add_plot_data_download(fig, filename: str, key: str) -> None:
+    """Offer plotted Plotly data with an example for loading it in Python."""
+    data = f"""# Plotly figure data. Run this Python code to load and display it:
+# from pathlib import Path
+# import plotly.io as pio
+# text = Path({filename!r}).read_text(encoding="utf-8")
+# json_text = text.split("# --- BEGIN PLOTLY JSON ---\\n", 1)[1]
+# fig = pio.from_json(json_text)
+# fig.show()
+# --- BEGIN PLOTLY JSON ---
+{fig.to_json()}"""
+    st.download_button(
+        label="Download plot data (JSON)",
+        data=data,
+        file_name=filename,
+        mime="application/json",
+        key=key,
+        on_click="ignore",
+    )
+
+
 # if "data" not in st.session_state:
 #     st.session_state['data'] = None
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -615,18 +636,38 @@ The colors transition smoothly:
             if figmod is not None and count > 0:
                 for i in range(len(toplot)):
                     st.plotly_chart(figmod[i], key=f"figmod{i}")
+                    add_plot_data_download(
+                        figmod[i],
+                        f"BO_model_{toplot[i]}.json",
+                        key=f"download_figmod_{i}",
+                    )
             elif figmod is not None and count == 0:
                 st.warning("Can't plot a model with no free features or with no numerical features.",
                            icon="⚠️")
             if figopt is not None:
                 st.plotly_chart(figopt, key=f"figopt")
+                add_plot_data_download(
+                    figopt,
+                    "BO_optimization_trace.json",
+                    key="download_figopt",
+                )
             if isinstance(figimp, list):
                 tabs_imp = st.tabs([name for name, _ in figimp])
-                for tab, (_, fig) in zip(tabs_imp, figimp):
+                for i, (tab, (name, fig)) in enumerate(zip(tabs_imp, figimp)):
                     with tab:
                         st.plotly_chart(fig, key=f"figimp_{id(fig)}")
+                        add_plot_data_download(
+                            fig,
+                            f"BO_feature_importance_{name}.json",
+                            key=f"download_figimp_{i}",
+                        )
             elif figimp is not None:
                 st.plotly_chart(figimp, key="figimp")
+                add_plot_data_download(
+                    figimp,
+                    "BO_feature_importance.json",
+                    key="download_figimp",
+                )
             else:
                 st.warning(
                     "Sensitivity Analysis plot could not be generated for the current model.", icon="⚠️")
@@ -658,6 +699,11 @@ The colors transition smoothly:
                         show_error_bars=False)
             if figpareto is not None:
                 st.plotly_chart(figpareto, key="figparetoplot")
+                add_plot_data_download(
+                    figpareto,
+                    "BO_pareto_frontier.json",
+                    key="download_figpareto",
+                )
 
 
 with tabs[2]:  # Predictions

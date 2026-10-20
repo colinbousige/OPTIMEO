@@ -158,6 +158,23 @@ with tabs[1]:  # visual assessment
         fig = st.session_state.analysis.plot_pairplot_plotly()
         cols[1].plotly_chart(fig, key="pairplot")
 
+        # Pareto chart of standardized effects
+        st.write("---\n##### Pareto chart of standardized effects")
+        cols = st.columns([1, 1, 2])
+        alpha = cols[0].number_input("Significance level α", min_value=0.001,
+                                     max_value=0.5, value=0.05, step=0.01,
+                                     format="%.3f", key="pareto_alpha")
+        interactions = cols[1].checkbox("Include interactions", value=False,
+                                        key="pareto_interactions",
+                                        help="Add two-factor interactions to the model used to compute the effects.")
+        try:
+            fig = st.session_state.analysis.plot_pareto(
+                alpha=alpha, order=2 if interactions else 1)
+            st.plotly_chart(fig, key="pareto")
+            st.caption("Bars are the absolute t-values of a linear model fitted on the parameters. Green bars are positive effects (the response increases with the parameter) and red bars are negative effects (it decreases). Bars crossing the dashed threshold are significant at the chosen α, the others are faded; the p-value is written next to each bar.")
+        except ValueError as e:
+            st.warning(str(e))
+
         # Scatter Plots for Each Factor
         st.write("---\n##### Polynomial fits")
         cols = st.columns(ncols)

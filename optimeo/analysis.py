@@ -119,6 +119,8 @@ class DataAnalysis:
         Generate pairplot with seaborn.
     plot_pairplot_plotly()
         Generate pairplot with plotly.
+    plot_pareto(alpha=0.05, order=1)
+        Plot Pareto chart of standardized effects.
     write_equation(order=1, quadratic=[])
         Build formula string for statsmodels.
     compute_linear_model(order=1, quadratic=[])
@@ -739,6 +741,101 @@ class DataAnalysis:
             width=600
         )
 
+        return fig
+
+    def plot_pareto(self, alpha=0.05, order=1):
+        """
+        Plot a Pareto chart of the standardized effects of the factors on the response.
+        Bars crossing the dashed line are significant at level ``alpha``;
+        green bars are positive effects, red bars negative.
+
+        Parameters
+        ----------
+        alpha : float, optional
+            Significance level. Default is ``0.05``.
+        order : int, optional
+            Interaction order of the model (``1``: main effects only,
+            ``2``: add two-factor interactions...). Default is ``1``.
+
+        Returns
+        -------
+        fig : plotly.graph_objs.Figure
+            The Pareto chart figure.
+        """
+        saved_equation = self._equation
+        try:
+            eqn = self.write_equation(order=order)
+        finally:
+            self._equation = saved_equation
+        model = smf.ols(formula=eqn, data=self._data).fit()
+        if model.df_resid <= 0:
+            raise ValueError(
+                "Not enough observations to estimate the effects: "
+                f"{len(self._data)} runs for {len(model.params)} model terms. "
+                "Remove interactions or add experiments.")
+        res = pd.DataFrame({'term': model.tvalues.index,
+                            't': model.tvalues.abs().values,
+                            'positive': (model.tvalues > 0).values,
+                            'p': model.pvalues.values})
+        res = res[res['term'] != 'Intercept']
+        res = res.sort_values(by='t', ascending=True)  # largest bar on top
+        tcrit = t.ppf(1 - alpha / 2, model.df_resid)
+        labels = [term.replace('I(', '').replace('C(', '').replace(')', '').replace(
+            ' ** ', '^') for term in res['term']]
+        # red: negative effect, green: positive effect.
+        # Effects that do not reach the threshold are faded.
+        colors = [('rgba(46,125,80,%s)' if pos else 'rgba(214,39,40,%s)')
+                  % (1 if tv > tcrit else 0.35)
+                  for pos, tv in zip(res['positive'], res['t'])]
+        sign = ['positive' if pos else 'negative' for pos in res['positive']]
+
+        fig = go.Figure()
+        fig.add_trace(go.Bar(
+            y=labels,
+            x=res['t'],
+            orientation='h',
+            marker_color=colors,
+            text=[f"p = {p:.3g}" for p in res['p']],
+            textposition='outside',
+            textfont=dict(color='black'),
+            customdata=np.column_stack([res['p'], sign]),
+            hovertemplate='<b>%{y}</b><br>|t| = %{x:.3f}<br>p = %{customdata[0]:.3g}<br>effect: %{customdata[1]}<extra></extra>',
+            showlegend=False,
+        ))
+        # empty traces, only used to build the legend
+        for name, color in [('Positive', 'rgb(46,125,80)'), ('Negative', 'rgb(214,39,40)')]:
+            fig.add_trace(go.Bar(x=[None], y=[None], name=name,
+                                 marker_color=color, orientation='h'))
+        fig.add_vline(x=tcrit, line_dash='dash', line_color='black',
+                      annotation_text=f"t = {tcrit:.2f} (α = {alpha:g})",
+                      annotation_position='top right',
+                      annotation_font=dict(color='black'))
+        fig.update_layout(
+            title='Pareto Chart of Standardized Effects',
+            xaxis_title='Standardized effect |t|',
+            plot_bgcolor="white",
+            showlegend=True,
+            legend=dict(title='Sign of effect'),
+            margin=dict(l=10, r=10, t=50, b=50),
+            xaxis=dict(
+                showgrid=True,
+                gridcolor="lightgray",
+                zeroline=False,
+                showline=True,
+                linewidth=1,
+                linecolor="black",
+                mirror=True,
+                range=[0, max(res['t'].max(), tcrit) * 1.25]
+            ),
+            yaxis=dict(
+                showgrid=False,
+                showline=True,
+                linewidth=1,
+                linecolor="black",
+                mirror=True
+            ),
+            height=max(300, 40 * len(res) + 120),
+        )
         return fig
 
     def write_equation(self, order=1, quadratic=[]):

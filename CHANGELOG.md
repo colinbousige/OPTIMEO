@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.4.2] - 2026-10-26
+
+### Added
+- Added a Pareto chart of standardized effects (absolute t-values of a linear model) in Data Analysis > Visual assessment, with a selectable significance level, optional interactions, effect-sign colors, and a caption explaining the t-value.
+
 ## [1.4.1] - 2026-10-08
 
 ### Added

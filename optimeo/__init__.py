@@ -68,6 +68,6 @@ For full API pages, use the docs sidebar or direct module pages:
 * `optimeo/doe.html <optimeo/doe.html>`_
 """
 
-__version__ = "1.4.1"
+__version__ = "1.4.2"
 
 __all__ = ["__version__"]

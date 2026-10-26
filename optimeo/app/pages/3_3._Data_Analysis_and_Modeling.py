@@ -171,7 +171,7 @@ with tabs[1]:  # visual assessment
             fig = st.session_state.analysis.plot_pareto(
                 alpha=alpha, order=2 if interactions else 1)
             st.plotly_chart(fig, key="pareto")
-            st.caption("Bars are the absolute t-values of a linear model fitted on the parameters. Green bars are positive effects (the response increases with the parameter) and red bars are negative effects (it decreases). Bars crossing the dashed threshold are significant at the chosen α, the others are faded; the p-value is written next to each bar.")
+            st.caption("Bars show the absolute t-values (|coefficient / standard error|) from an ordinary least-squares model. This is the number of standard errors by which each estimated effect differs from zero; the sign of the effect is shown by color (green for positive, red for negative). Bars crossing the dashed threshold are significant at the chosen α, using the model's residual degrees of freedom; the p-value is written next to each bar.")
         except ValueError as e:
             st.warning(str(e))
 

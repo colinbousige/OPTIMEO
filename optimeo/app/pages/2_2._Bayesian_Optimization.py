@@ -63,10 +63,6 @@ def model_updated():
     st.session_state.model_up_to_date = True
 
 
-def plot_changed():
-    st.session_state.plot_up_to_date = False
-
-
 def plot_updated():
     st.session_state.plot_up_to_date = True
 
@@ -567,22 +563,37 @@ The results may vary slightly each time you run it."""):
 
 **How to Fix Parameters:**
 
-- Enter a value in the boxes below to fix a parameter to that value for the plot.
+- Enter a value in the boxes below to fix a parameter to that value for the plot. Once plotted, changing a slice updates the plots automatically.
 - Leave a box empty if you want the parameter to remain free (not fixed).
 
 **What Happens If You Leave Parameters Free?**
 
-- If more than two parameters are free, the plot will let you choose which two parameters to visualize.
-- The other free parameters will be marginalized (averaged over) in the plot.
+- If more than two numeric parameters are free, choose the x- and y-axis parameters after plotting.
+- Other free parameters use Ax's default slice values: the status quo if available, otherwise the mean for numeric parameters or mode for categorical parameters.
+- Parameters fixed for generating new experiments are still available for plotting unless you set a slice value here.
 
 **Understanding the Plot Colors:**
 
-The color of each point in the plot represents its distance from the slice values (the fixed parameters).
-The colors transition smoothly:
+Choose how to color observed points:
 
-- :blue[**Blue**]: Points are below the slice value.
-- **White**: Points are close to the slice value.
-- :red[**Red**]: Points are above the slice value.
+- **No coloring**: All observed points have the same color.
+- **Single parameter**: Use the signed difference between the point and the chosen numeric slice value.
+- **Overall slice**: Color the points according to their signed normalized distance $D$ from the slice values.
+Categorical slices and default slice values do not contribute. $D$ is computed as:
+
+$$
+D = \\sum_{i \\in S} \\frac{x_i - s_i}{max_i - min_i}
+$$
+
+Here, $S$ is the set of explicitly sliced numeric parameters, $x_i$ is the observed value, $s_i$ the slice value, $max_i$ the maximum allowed value, and $min_i$ the minimum allowed value.
+
+- :blue[**Blue**]: The signed value is negative.
+- **White**: The signed value is zero or close to zero.
+- :red[**Red**]: The signed value is positive.
+
+Positive and negative values are scaled separately using the most extreme observed value on each side. In overall mode, differences can cancel: a point may be white even when it does not match the individual slice values. Overall coloring requires each numeric slice to have a positive, finite range.
+
+Candidate points are orange. The contour background represents the predicted outcome, not the point coloring.
 
 """)
         cols = containerplot.columns([3, 3, 1])
@@ -590,20 +601,17 @@ The colors transition smoothly:
         for i, f in enumerate(factors):
             if features[f]['type'] == 'float':
                 temp = cols[i % 2].number_input(f"Slice for **{f}**", key=f"parslice{f}",
-                                                on_change=plot_changed,
                                                 value=None, min_value=features[f]['range'][0],
                                                 max_value=features[f]['range'][1])
                 if temp is not None:
                     parslice[f] = temp
             if features[f]['type'] == 'text':
                 temp = cols[i % 2].multiselect(f"Slice for **{f}**", max_selections=1,
-                                               on_change=plot_changed,
                                                options=features[f]['range'], key=f"parslice{f}")
                 if len(temp) > 0:
                     parslice[f] = temp[0]
             if features[f]['type'] == 'int':
                 temp = cols[i % 2].number_input(f"Slice for **{f}**", key=f"parslice{f}",
-                                                on_change=plot_changed,
                                                 value=None,
                                                 min_value=int(
                                                     features[f]['range'][0]),
@@ -611,22 +619,72 @@ The colors transition smoothly:
                 if temp is not None:
                     parslice[f] = temp
 
-        # find which parameters are not in parslice and are not in fixed_features
-        not_fixed = [
-            f for f in factors if f not in parslice and f not in fixed_features_names]
-        # count how many parameters in not_fixed are float or int
-        count = len([name for name in not_fixed if features[name]
-                    ['type'] == 'float' or features[name]['type'] == 'int'])
+        numeric_parameters = [
+            f for f in factors
+            if f not in parslice and features[f]['type'] in ('float', 'int')
+        ]
+        count = len(numeric_parameters)
         if st.session_state['bo'] is not None and (cols[2].button("Plot model / Update plots", type="primary",
                                                                   on_click=plot_updated,
                                                                   disabled=st.session_state['plot_up_to_date']) or
                                                    st.session_state['plot_up_to_date'] == True):
             toplot = [r for r in responses if r not in non_metric_outcomes]
             if count > 0:
+                sliced_numeric = [
+                    name for name in parslice if features[name]['type'] in ('float', 'int')
+                ]
+                color_choice = "No coloring"
+                color_parameter = None
+                if sliced_numeric:
+                    color_options = ["No coloring", "Single parameter"]
+                    invalid_ranges = [
+                        name for name in sliced_numeric
+                        if not np.isfinite(features[name]['range'][1] - features[name]['range'][0])
+                        or features[name]['range'][1] <= features[name]['range'][0]
+                    ]
+                    if not invalid_ranges:
+                        color_options.append("Overall slice")
+                    else:
+                        containerplot.warning(
+                            "Overall slice coloring requires a positive, finite range for: "
+                            + ", ".join(invalid_ranges)
+                        )
+                    color_cols = containerplot.columns(2)
+                    color_choice = color_cols[0].selectbox(
+                        "Color observed points", color_options,
+                        index=len(color_options) - 1,
+                        key=f"bo_plot_color_{widget_scope}"
+                    )
+                    if color_choice == "Single parameter":
+                        color_parameter = color_cols[1].selectbox(
+                            "Coloring parameter", sliced_numeric,
+                            key=f"bo_plot_color_parameter_{widget_scope}"
+                        )
+                color_modes = {
+                    "No coloring": "none",
+                    "Single parameter": "parameter",
+                    "Overall slice": "overall",
+                }
+                plot_axes = {}
+                if count > 2:
+                    axis_cols = containerplot.columns(2)
+                    param_x = axis_cols[0].selectbox(
+                        "X-axis parameter", numeric_parameters,
+                        key=f"bo_plot_x_{widget_scope}"
+                    )
+                    param_y = axis_cols[1].selectbox(
+                        "Y-axis parameter",
+                        [name for name in numeric_parameters if name != param_x],
+                        key=f"bo_plot_y_{widget_scope}"
+                    )
+                    plot_axes = {"param_x": param_x, "param_y": param_y}
                 for i in range(len(toplot)):
                     figmod.append(st.session_state['bo'].plot_model(metricname=toplot[i],
                                                                     slice_values=parslice,
                                                                     linear=False if count > 1 else True,
+                                                                    color_mode=color_modes[color_choice],
+                                                                    color_parameter=color_parameter,
+                                                                    **plot_axes,
                                                                     ))
             if len(responses) == 1:
                 figopt = st.session_state['bo'].plot_optimization_trace()

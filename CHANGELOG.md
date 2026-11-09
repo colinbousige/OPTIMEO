@@ -2,6 +2,19 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.5.0] - 2026-11-09
+
+### Added
+- Added x- and y-axis selectors for Bayesian Optimization model plots with more than two free numeric parameters.
+- Added observed-point coloring options for no coloring, a single numeric slice, or a range-normalized signed sum across numeric slices.
+
+### Changed
+- Bayesian Optimization plots update automatically when slice values change after plotting.
+- Improved slicing guidance and candidate point visibility, and made parameters fixed for candidate generation available for plotting.
+
+### Fixed
+- Prevented categorical slice values from breaking observed-point coloring.
+
 ## [1.4.2] - 2026-10-26
 
 ### Added

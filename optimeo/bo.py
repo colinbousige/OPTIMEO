@@ -176,7 +176,7 @@ class BOExperiment:
         Predict outcomes for a list of parameter dictionaries.
     update_experiment(params, outcomes)
         Update the experiment with new observations and refresh internal state.
-    plot_model(metricname=None, slice_values=None, linear=False)
+    plot_model(metricname=None, slice_values=None, linear=False, param_x=None, param_y=None, color_mode=None, color_parameter=None)
         Plot model predictions as slices or contours.
     plot_optimization_trace(optimum=None)
         Plot optimization progress over trials.
@@ -932,7 +932,8 @@ Input data:
             self._outcomes[k]['data'] += v
         self.initialize_ax_client()
 
-    def plot_model(self, metricname=None, slice_values={}, linear=False):
+    def plot_model(self, metricname=None, slice_values={}, linear=False,
+                   param_x=None, param_y=None, color_mode=None, color_parameter=None):
         """
         Plot the model's predictions for the experiment's parameters and outcomes.
 
@@ -944,6 +945,20 @@ Input data:
             Dictionary of slice values for plotting.
         linear : bool
             Whether to plot a linear slice plot. Default is ``False``.
+        param_x, param_y : Optional[str]
+            Distinct, unsliced numeric parameters to plot on the x and y axes.
+            Supply both to select a contour or observed scatter plot. Other
+            parameters use their slice values or Ax's default slice values.
+        color_mode : Optional[str]
+            ``"none"`` colors observed points white, ``"parameter"`` colors by the
+            signed difference from one numeric slice, and ``"overall"`` uses
+            the sum of signed differences divided by their parameter ranges.
+            Positive and negative values are scaled separately to red and blue.
+            If omitted, model plots use overall coloring and observed-only
+            plots retain their original outcome coloring.
+        color_parameter : Optional[str]
+            Name of an explicitly sliced numeric parameter, required only for
+            ``color_mode="parameter"``.
 
         Returns
         -------
@@ -959,6 +974,54 @@ Input data:
             name for name in self.names if name not in slice_values.keys()]
         par_numeric = [
             name for name in param_name if self._features[name]['type'] in ['int', 'float']]
+        axes_selected = param_x is not None or param_y is not None
+        if axes_selected and (
+            param_x not in par_numeric or param_y not in par_numeric or param_x == param_y
+        ):
+            raise ValueError("Select two distinct, unsliced numeric parameters for the plot axes.")
+        numeric_slices = {
+            name: value for name, value in slice_values.items()
+            if self._features[name]['type'] in ['int', 'float']
+        }
+        if color_mode not in (None, "none", "parameter", "overall"):
+            raise ValueError("color_mode must be 'none', 'parameter', or 'overall'.")
+        if color_mode == "parameter":
+            if color_parameter not in numeric_slices:
+                raise ValueError("Select an explicitly sliced numeric parameter for coloring.")
+        elif color_parameter is not None:
+            raise ValueError("color_parameter is only valid with color_mode='parameter'.")
+
+        def observed_colors(completed_trials):
+            mode = color_mode or "overall"
+            if mode == "none":
+                return ["white"] * len(completed_trials)
+            if mode == "parameter":
+                signed_dists = (completed_trials[color_parameter] - numeric_slices[color_parameter]).to_numpy()
+            else:
+                signed_dists = np.zeros(len(completed_trials), dtype=float)
+                magnitudes = np.zeros(len(completed_trials), dtype=float)
+                for name, value in numeric_slices.items():
+                    lower, upper = self._features[name]['range']
+                    width = upper - lower
+                    if not np.isfinite(width) or width <= 0:
+                        raise ValueError(f"Parameter '{name}' must have a positive finite range for overall slice coloring.")
+                    difference = (completed_trials[name].to_numpy() - value) / width
+                    signed_dists += difference
+                    magnitudes += np.abs(difference)
+                tolerance = np.finfo(float).eps * 8 * np.maximum(1, magnitudes)
+                signed_dists[np.abs(signed_dists) <= tolerance] = 0
+
+            positive = signed_dists > 0
+            negative = signed_dists < 0
+            normalized = np.zeros_like(signed_dists, dtype=float)
+            if positive.any():
+                normalized[positive] = signed_dists[positive] / signed_dists[positive].max()
+            if negative.any():
+                normalized[negative] = signed_dists[negative] / abs(signed_dists[negative].min())
+            return [
+                f"rgb({int(r*255)}, {int(g*255)}, {int(b*255)})"
+                for r, g, b, _ in mpl.colormaps['bwr']((normalized + 1) / 2)
+            ]
 
         if self.model is None:
             completed_trials = self.ax_client.get_trials_data_frame()
@@ -977,14 +1040,14 @@ Input data:
                     y=mname,
                     title=f"Observed {mname} vs {par_numeric[0]}",
                 )
-            elif len(par_numeric) == 2:
+            elif len(par_numeric) == 2 or axes_selected:
                 fig = px.scatter(
                     completed_trials,
-                    x=par_numeric[0],
-                    y=par_numeric[1],
-                    color=mname,
+                    x=param_x if axes_selected else par_numeric[0],
+                    y=param_y if axes_selected else par_numeric[1],
+                    color=mname if color_mode is None else None,
                     color_continuous_scale="Viridis",
-                    title=f"Observed {par_numeric[1]} vs {par_numeric[0]}",
+                    title=f"Observed {param_y if axes_selected else par_numeric[1]} vs {param_x if axes_selected else par_numeric[0]}",
                 )
             else:
                 fig = px.scatter_matrix(
@@ -993,6 +1056,10 @@ Input data:
                     title=f"Observed relationships for {mname}",
                 )
 
+            if color_mode is not None:
+                fig.update_traces(marker_color=observed_colors(completed_trials))
+                if color_mode == "none":
+                    fig.update_traces(marker_line_color="black", marker_line_width=1)
             return fig
 
         if len(par_numeric) == 1:
@@ -1004,12 +1071,12 @@ Input data:
                 generator_runs_dict={cand_name: self.generator_run},
                 slice_values=slice_values
             )
-        elif len(par_numeric) == 2:
+        elif len(par_numeric) == 2 or axes_selected:
             fig = plot_contour(
                 model=self.model,
                 metric_name=mname,
-                param_x=par_numeric[0],
-                param_y=par_numeric[1],
+                param_x=param_x if axes_selected else par_numeric[0],
+                param_y=param_y if axes_selected else par_numeric[1],
                 generator_runs_dict={cand_name: self.generator_run},
                 slice_values=slice_values
             )
@@ -1049,45 +1116,7 @@ Input data:
         all_trials = self.ax_client.get_trials_data_frame()
         completed_trials = all_trials[all_trials['trial_status'] != 'CANDIDATE'].copy(
         )
-        # compute distance to slice
-        col_to_consider = completed_trials[[k for k in slice_values.keys()]]
-        completed_trials.loc[:, 'signed_dist_to_slice'] = (
-            # Sum of signed differences
-            (col_to_consider - slice_values).sum(axis=1)
-        )
-        signed_dists = completed_trials['signed_dist_to_slice'].values
-        positive_dists = signed_dists[signed_dists >= 0]
-        negative_dists = signed_dists[signed_dists < 0]
-
-        # Normalize positive distances to [0, 1]
-        if len(positive_dists) > 0 and np.max(positive_dists) > 0:
-            normalized_positive = positive_dists / np.max(positive_dists)
-        else:
-            normalized_positive = np.zeros_like(positive_dists)
-
-        # Normalize negative distances to [-1, 0]
-        if len(negative_dists) > 0 and np.min(negative_dists) < 0:
-            normalized_negative = negative_dists / \
-                np.abs(np.min(negative_dists))
-        else:
-            normalized_negative = np.zeros_like(negative_dists)
-
-        # Combine the normalized distances
-        normalized_signed_dists = np.zeros_like(signed_dists)
-        normalized_signed_dists[signed_dists >= 0] = normalized_positive
-        normalized_signed_dists[signed_dists < 0] = normalized_negative
-
-        completed_trials.loc[:,
-                             'normalized_signed_dist'] = normalized_signed_dists
-        coolwarm = mpl.colormaps['bwr']
-        # Map from [-1,1] to [0,1]
-        normalized_values = (
-            completed_trials['normalized_signed_dist'] + 1) / 2
-        colors = [
-            f"rgb({int(r*255)}, {int(g*255)}, {int(b*255)})"
-            for r, g, b, _ in coolwarm(normalized_values)
-        ]
-        completed_trials.loc[:, 'colors'] = colors
+        completed_trials.loc[:, 'colors'] = observed_colors(completed_trials)
         trials = self.ax_client.get_trials_data_frame()
         trials = trials[trials['trial_status'] == 'CANDIDATE']
         trials = trials[[name for name in self.names]]
@@ -1119,6 +1148,7 @@ Input data:
                         "_0", "</b>") for t in trace.text]
             if trace.legendgroup == cand_name:
                 trace.marker.line.color = 'red'
+                trace.marker.line.width = 2
                 trace.marker.color = "orange"
                 trace.name = cand_name
                 trace.marker.symbol = "x"
@@ -1186,6 +1216,10 @@ Input data:
                 mirror=True
             ),
         )
+        if axes_selected:
+            plotly_fig.update_layout(
+                xaxis_title=param_x, xaxis2_title=param_x, yaxis_title=param_y
+            )
         return plotly_fig
 
     def plot_optimization_trace(self, optimum=None):
